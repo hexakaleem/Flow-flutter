@@ -1,4 +1,8 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
 import '../models/load.dart';
 import '../services/load_service.dart';
 import '../services/shipment_service.dart';
@@ -21,11 +25,66 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
   bool _isLoading = false;
   final LoadService _loadService = LoadService();
   final ShipmentService _shipmentService = ShipmentService();
+  final MapController _mapController = MapController();
+  List<LatLng> _routePoints = [];
+  LatLng? _originLatLng;
+  LatLng? _destinationLatLng;
+  bool _mapLoading = true;
+
+  static const _nominatimBase = 'https://nominatim.openstreetmap.org';
+  static const _osrmBase = 'https://router.project-osrm.org/route/v1/driving';
 
   @override
   void initState() {
     super.initState();
     _load = widget.load;
+    _buildRoute();
+  }
+
+  Future<LatLng?> _geocode(String place) async {
+    final uri = Uri.parse(
+        '$_nominatimBase/search?q=${Uri.encodeQueryComponent(place)}&format=json&limit=1');
+    final resp = await http.get(uri, headers: {'User-Agent': 'FlowApp/1.0'});
+    if (resp.statusCode == 200) {
+      final data = json.decode(resp.body) as List;
+      if (data.isNotEmpty) {
+        return LatLng(
+          double.parse(data[0]['lat']),
+          double.parse(data[0]['lon']),
+        );
+      }
+    }
+    return null;
+  }
+
+  Future<void> _buildRoute() async {
+    final originStr = '${_load.origin}, ${_load.originState}';
+    final destStr = '${_load.destination}, ${_load.destinationState}';
+    final o = await _geocode(originStr);
+    final d = await _geocode(destStr);
+    if (o == null || d == null) {
+      setState(() => _mapLoading = false);
+      return;
+    }
+    _originLatLng = o;
+    _destinationLatLng = d;
+    final uri = Uri.parse(
+        '$_osrmBase/${o.longitude},${o.latitude};${d.longitude},${d.latitude}?overview=full&geometries=geojson');
+    final resp = await http.get(uri);
+    if (resp.statusCode == 200) {
+      final data = json.decode(resp.body);
+      final coords = data['routes'][0]['geometry']['coordinates'] as List;
+      _routePoints = coords.map((c) => LatLng(c[1].toDouble(), c[0].toDouble())).toList();
+    }
+    setState(() => _mapLoading = false);
+    if (_routePoints.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final bounds = LatLngBounds.fromPoints(_routePoints);
+        _mapController.fitCamera(
+          CameraFit.bounds(bounds: bounds, padding: const EdgeInsets.all(24)),
+        );
+      });
+    }
   }
 
   Future<void> _bookLoad() async {
@@ -137,26 +196,78 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
                     ),
                   ),
 
-                  // Map image placeholder
+                  // Live OSM Map
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(color: Colors.grey.shade300),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 5),
-                          )
-                        ],
-                        image: const DecorationImage(
-                          image: AssetImage('assets/map.png'),
-                          fit: BoxFit.cover,
-                        ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: SizedBox(
+                        height: 200,
+                        child: _mapLoading
+                            ? Container(
+                                color: Colors.grey.shade100,
+                                child: const Center(
+                                  child: CircularProgressIndicator(color: Color(0xFF7C3AED)),
+                                ),
+                              )
+                            : FlutterMap(
+                                mapController: _mapController,
+                                options: MapOptions(
+                                  initialCenter: _originLatLng ?? const LatLng(33.0, -89.0),
+                                  initialZoom: 6,
+                                  interactionOptions: const InteractionOptions(
+                                    flags: InteractiveFlag.none, // disable scroll to keep UX clean
+                                  ),
+                                ),
+                                children: [
+                                  TileLayer(
+                                    urlTemplate:
+                                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                    userAgentPackageName: 'com.example.flow_app',
+                                  ),
+                                  if (_routePoints.isNotEmpty)
+                                    PolylineLayer(
+                                      polylines: [
+                                        Polyline(
+                                          points: _routePoints,
+                                          strokeWidth: 3.5,
+                                          color: const Color(0xFF7C3AED),
+                                        ),
+                                      ],
+                                    ),
+                                  if (_originLatLng != null && _destinationLatLng != null)
+                                    MarkerLayer(
+                                      markers: [
+                                        Marker(
+                                          point: _originLatLng!,
+                                          width: 30,
+                                          height: 30,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.green,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.white, width: 2),
+                                            ),
+                                            child: const Icon(Icons.circle, color: Colors.white, size: 12),
+                                          ),
+                                        ),
+                                        Marker(
+                                          point: _destinationLatLng!,
+                                          width: 30,
+                                          height: 30,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: Colors.red,
+                                              shape: BoxShape.circle,
+                                              border: Border.all(color: Colors.white, width: 2),
+                                            ),
+                                            child: const Icon(Icons.location_pin, color: Colors.white, size: 16),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
                       ),
                     ),
                   ),

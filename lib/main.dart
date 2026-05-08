@@ -7,9 +7,11 @@ import 'screens/shipment_detail_screen.dart';
 import 'screens/load_board_screen.dart';
 import 'screens/load_details_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/navigation_screen.dart';
 import 'models/load.dart';
 import 'models/shipment.dart';
 import 'theme/app_theme.dart';
+import 'package:latlong2/latlong.dart';
 
 void main() {
   runApp(const FlowApp());
@@ -41,6 +43,17 @@ class FlowApp extends StatelessWidget {
           final shipment =
               ModalRoute.of(context)?.settings.arguments as Shipment?;
           return ShipmentDetailScreen(shipment: shipment);
+        },
+        '/navigation': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments as Map?;
+          final shipment = args?['shipment'] as Shipment?;
+          final origin = args?['origin'] as LatLng? ?? const LatLng(32.78, -96.8);
+          final destination = args?['destination'] as LatLng? ?? const LatLng(33.74, -84.38);
+          return NavigationScreen(
+            shipment: shipment,
+            origin: origin,
+            destination: destination,
+          );
         },
       },
     );

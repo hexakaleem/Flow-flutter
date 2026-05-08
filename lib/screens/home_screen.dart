@@ -47,6 +47,47 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadShipments();
   }
 
+  Future<void> _cancelShipment(Shipment s) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Cancel Shipment?',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(
+            'Are you sure you want to cancel load ${s.loadId}? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Keep Shipment'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Cancel Shipment'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await _shipmentService.deleteShipment(s.id);
+      await _loadShipments();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Shipment cancelled. You can now book a new load.'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+      }
+    }
+  }
+
   void _onNavTap(int index) {
     if (index == 2) {
       _openLoadBoard();
@@ -310,11 +351,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              Align(
-                alignment: Alignment.bottomRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 30),
-                  child: ElevatedButton(
+              Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  const SizedBox(height: 30),
+                  ElevatedButton(
                     onPressed: () => Navigator.pushNamed(context, '/shipment_detail', arguments: s).then((_) => _loadShipments()),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal.shade400,
@@ -324,7 +366,22 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: const Text('Go to Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
-                ),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: () => _cancelShipment(s),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade900,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
