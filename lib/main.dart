@@ -4,6 +4,11 @@ import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/shipment_detail_screen.dart';
+import 'screens/load_board_screen.dart';
+import 'screens/load_details_screen.dart';
+import 'screens/profile_screen.dart';
+import 'models/load.dart';
+import 'models/shipment.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -25,7 +30,18 @@ class FlowApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
         '/home': (context) => const HomeScreen(),
-        '/shipment_detail': (context) => const ShipmentDetailScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/load_board': (context) => const LoadBoardScreen(),
+        '/load_details': (context) {
+          final load = ModalRoute.of(context)?.settings.arguments as Load?;
+          if (load == null) return const LoadBoardScreen();
+          return LoadDetailsScreen(load: load);
+        },
+        '/shipment_detail': (context) {
+          final shipment =
+              ModalRoute.of(context)?.settings.arguments as Shipment?;
+          return ShipmentDetailScreen(shipment: shipment);
+        },
       },
     );
   }

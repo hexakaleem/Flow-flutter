@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import '../models/shipment.dart';
 
 class ShipmentDetailScreen extends StatelessWidget {
-  const ShipmentDetailScreen({super.key});
+  final Shipment? shipment;
+
+  const ShipmentDetailScreen({super.key, this.shipment});
 
   @override
   Widget build(BuildContext context) {
@@ -26,26 +29,36 @@ class ShipmentDetailScreen extends StatelessWidget {
               children: [
                 // Decorative road lines
                 Positioned(
-                  top: 80, left: 0, right: 0,
+                  top: 80,
+                  left: 0,
+                  right: 0,
                   child: Container(height: 1, color: Colors.white10),
                 ),
                 Positioned(
-                  top: 140, left: 30, right: 30,
+                  top: 140,
+                  left: 30,
+                  right: 30,
                   child: Container(height: 1, color: Colors.white10),
                 ),
                 Positioned(
-                  top: 200, left: 0, right: 80,
+                  top: 200,
+                  left: 0,
+                  right: 80,
                   child: Container(height: 1, color: Colors.white10),
                 ),
                 Positioned(
-                  top: 260, left: 60, right: 0,
+                  top: 260,
+                  left: 60,
+                  right: 0,
                   child: Container(height: 1, color: Colors.white10),
                 ),
                 // Route dots
                 Positioned(
-                  top: 160, left: 60,
+                  top: 160,
+                  left: 60,
                   child: Container(
-                    width: 12, height: 12,
+                    width: 12,
+                    height: 12,
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
@@ -53,9 +66,11 @@ class ShipmentDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Positioned(
-                  top: 280, right: 80,
+                  top: 280,
+                  right: 80,
                   child: Container(
-                    width: 12, height: 12,
+                    width: 12,
+                    height: 12,
                     decoration: BoxDecoration(
                       color: Colors.orange.shade400,
                       shape: BoxShape.circle,
@@ -65,7 +80,7 @@ class ShipmentDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          
+
           SafeArea(
             child: Column(
               children: [
@@ -77,41 +92,34 @@ class ShipmentDetailScreen extends StatelessWidget {
                       CircleAvatar(
                         backgroundColor: Colors.black.withOpacity(0.8),
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.white),
+                          icon:
+                              const Icon(Icons.arrow_back, color: Colors.white),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
                       const SizedBox(width: 15),
                       Expanded(
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 15, vertical: 12),
                           decoration: BoxDecoration(
                             color: Colors.black.withOpacity(0.8),
                             borderRadius: BorderRadius.circular(15),
                           ),
                           child: const Text(
                             'Current Shipment',
-                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold),
                           ),
-                        ),
-                      ),
-                      const SizedBox(width: 15),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.send, size: 16),
-                        label: const Text('Navigate'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.teal,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         ),
                       ),
                     ],
                   ),
                 ),
-                
+
                 const Spacer(),
-                
+
                 // Content Card
                 Container(
                   width: double.infinity,
@@ -123,7 +131,10 @@ class ShipmentDetailScreen extends StatelessWidget {
                       topRight: Radius.circular(40),
                     ),
                     boxShadow: [
-                      BoxShadow(color: Colors.black12, blurRadius: 20, spreadRadius: 5),
+                      BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 20,
+                          spreadRadius: 5),
                     ],
                   ),
                   child: Column(
@@ -141,59 +152,79 @@ class ShipmentDetailScreen extends StatelessWidget {
                                   color: Colors.grey.shade100,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(Icons.inventory_2_outlined, color: Colors.brown),
+                                child: const Icon(Icons.inventory_2_outlined,
+                                    color: Colors.brown),
                               ),
                               const SizedBox(width: 15),
-                              const Column(
+                              Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('549SD00X87', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.black)),
-                                  Text('Fruits & Vegetables · Reefer', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                                  Text(shipment?.loadId ?? '549SD00X87',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                          color: Colors.black)),
+                                  Text(
+                                      '${shipment?.commodity ?? 'Fruits & Vegetables'} · Reefer',
+                                      style: const TextStyle(
+                                          color: Colors.grey, fontSize: 12)),
                                 ],
                               ),
                             ],
                           ),
-                          const Column(
+                          Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text('\$2,800', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22, color: Colors.black)),
-                              Text('↑ \$3.50 / mi', style: TextStyle(color: Colors.green, fontSize: 12)),
+                              Text(shipment?.rate ?? '\$2,800',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 22,
+                                      color: Colors.black)),
+                              const Text('↑ \$3.50 / mi',
+                                  style: TextStyle(
+                                      color: Colors.green, fontSize: 12)),
                             ],
                           ),
                         ],
                       ),
                       const SizedBox(height: 30),
-                      
+
                       // Route Progress
-                      _buildRouteStep('Dallas, TX', 'April 1, 2026 · 08:00', 'Picked up', true),
-                      _buildRouteStep('Atlanta, GA', 'April 2, 2026 · 14:30', 'En route', false),
-                      
+                      _buildRouteStep('Dallas, TX', 'April 1, 2026 · 08:00',
+                          'Picked up', true),
+                      _buildRouteStep('Atlanta, GA', 'April 2, 2026 · 14:30',
+                          'En route', false),
+
                       const SizedBox(height: 30),
-                      
+
                       // Stats Grid
                       Row(
                         children: [
-                          _buildStatItem(Icons.location_on_outlined, 'Distance', '781 mi'),
+                          _buildStatItem(
+                              Icons.location_on_outlined, 'Distance', '781 mi'),
                           const SizedBox(width: 15),
-                          _buildStatItem(Icons.timer_outlined, 'Time left', '4h 20m'),
+                          _buildStatItem(
+                              Icons.timer_outlined, 'Time left', '4h 20m'),
                         ],
                       ),
                       const SizedBox(height: 15),
                       Row(
                         children: [
-                          _buildStatItem(Icons.shopping_cart_outlined, 'Weight', '38,500 lbs'),
+                          _buildStatItem(Icons.shopping_cart_outlined, 'Weight',
+                              '38,500 lbs'),
                           const SizedBox(width: 15),
-                          _buildStatItem(Icons.thermostat_outlined, 'Temp', '-4°C'),
+                          _buildStatItem(
+                              Icons.thermostat_outlined, 'Temp', '-4°C'),
                         ],
                       ),
-                      
+
                       const SizedBox(height: 30),
-                      
+
                       // Bottom Actions
                       Row(
                         children: [
                           _buildIconButton(Icons.phone_outlined),
-                          const SizedBox(width: 15),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: ElevatedButton.icon(
                               onPressed: () {},
@@ -203,11 +234,12 @@ class ShipmentDetailScreen extends StatelessWidget {
                                 backgroundColor: Colors.teal,
                                 foregroundColor: Colors.white,
                                 minimumSize: const Size(double.infinity, 60),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(15)),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 15),
+                          const SizedBox(width: 10),
                           _buildIconButton(Icons.description_outlined),
                         ],
                       ),
@@ -222,7 +254,8 @@ class ShipmentDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRouteStep(String location, String date, String status, bool isCompleted) {
+  Widget _buildRouteStep(
+      String location, String date, String status, bool isCompleted) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
@@ -230,8 +263,10 @@ class ShipmentDetailScreen extends StatelessWidget {
         children: [
           Column(
             children: [
-              Icon(Icons.circle, size: 12, color: isCompleted ? Colors.black : Colors.orange),
-              if (!isCompleted) Container(width: 2, height: 40, color: Colors.grey.shade200),
+              Icon(Icons.circle,
+                  size: 12, color: isCompleted ? Colors.black : Colors.orange),
+              if (!isCompleted)
+                Container(width: 2, height: 40, color: Colors.grey.shade200),
             ],
           ),
           const SizedBox(width: 15),
@@ -239,13 +274,19 @@ class ShipmentDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(location, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
-                Text(date, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                Text(location,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(date,
+                    style: const TextStyle(color: Colors.grey, fontSize: 12)),
                 const SizedBox(height: 5),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: isCompleted ? Colors.blue.shade50 : Colors.orange.shade50,
+                    color: isCompleted
+                        ? Colors.blue.shade50
+                        : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
@@ -288,8 +329,11 @@ class ShipmentDetailScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-                Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)),
+                Text(label,
+                    style: const TextStyle(color: Colors.grey, fontSize: 10)),
+                Text(value,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black)),
               ],
             ),
           ],

@@ -1,365 +1,441 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
+import '../services/shipment_service.dart';
+import '../models/shipment.dart';
 
-class HomeScreen extends StatelessWidget {
+import '../widgets/custom_bottom_nav.dart';
+
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final AuthService _auth = AuthService();
+  final ShipmentService _shipmentService = ShipmentService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  List<Shipment> _shipments = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadShipments();
+  }
+
+  Future<void> _loadShipments() async {
+    setState(() => _loading = true);
+    final list = await _shipmentService.getCurrentUserShipments();
+    setState(() {
+      _shipments = list;
+      _loading = false;
+    });
+  }
+
+  Future<void> _openLoadBoard() async {
+    if (_shipments.isNotEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You cannot book more than one load at a time.')),
+      );
+      return;
+    }
+    await Navigator.pushNamed(context, '/load_board');
+    await _loadShipments();
+  }
+
+  void _onNavTap(int index) {
+    if (index == 2) {
+      _openLoadBoard();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final username = _auth.currentUser?.username ?? 'Driver';
+    final now = DateTime.now();
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    final currentDate = '${months[now.month - 1]}, ${now.day.toString().padLeft(2, '0')}, ${now.year}';
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      key: _scaffoldKey,
+      drawer: _buildDrawer(),
+      backgroundColor: const Color(0xFFF8F9FA), // Light background
       body: Stack(
         children: [
-          // Background Gradient (Partial)
+          // Top Gradient Background
           Container(
-            height: 300,
+            height: 350,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Color(0xFFB066FE),
-                  Colors.black,
+                  Color(0xFFCE9FFC),
+                  Color(0xFFF8F9FA),
                 ],
               ),
             ),
           ),
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Top Header
-                  Row(
-                    children: [
-                      const CircleAvatar(
-                        radius: 25,
-                        backgroundColor: Color(0xFFB066FE),
-                        child: Icon(Icons.person,
-                            color: Colors.white, size: 26),
-                      ),
-                      const SizedBox(width: 15),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 15, vertical: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.5),
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                          child: const Row(
-                            children: [
-                              Text(
-                                'WELCOME SALAR!',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              Spacer(),
-                              Icon(Icons.search, size: 20),
-                              SizedBox(width: 15),
-                              Icon(Icons.notifications, size: 20),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'April, 01, 2026',
-                    style: TextStyle(color: Colors.white70, fontSize: 16),
-                  ),
-                  const Text(
-                    '5th Avenue, New York, NYC',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-                  ),
-                  const SizedBox(height: 30),
-                  const Text(
-                    'Current Shipment',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 15),
-
-                  // Shipment Card
-                  GestureDetector(
-                    onTap: () =>
-                        Navigator.pushNamed(context, '/shipment_detail'),
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(25),
-                        border: Border.all(color: Colors.white12),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('549SD00X87',
-                                      style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18)),
-                                  Text('Fruits & Vegetables',
-                                      style: TextStyle(
-                                          color: Colors.white54, fontSize: 12)),
-                                ],
-                              ),
-                              Container(
-                                width: 50,
-                                height: 1,
-                                color: Colors.white24,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              Column(
-                                children: [
-                                  const Icon(Icons.radio_button_checked,
-                                      color: Colors.white, size: 16),
-                                  Container(
-                                      width: 2,
-                                      height: 40,
-                                      color: Colors.white24),
-                                  const Icon(Icons.location_on,
-                                      color: Colors.white, size: 16),
-                                ],
-                              ),
-                              const SizedBox(width: 15),
-                              const Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text('Dallas ,TX',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    Text('April 1, 2026',
-                                        style: TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12)),
-                                    SizedBox(height: 25),
-                                    Text('Atlanta ,GE',
-                                        style: TextStyle(
-                                            fontWeight: FontWeight.bold)),
-                                    Text('April 2, 2026',
-                                        style: TextStyle(
-                                            color: Colors.white54,
-                                            fontSize: 12)),
-                                  ],
-                                ),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {},
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.teal,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10)),
-                                ),
-                                child: const Text('Go to Map',
-                                    style: TextStyle(fontSize: 12)),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 25),
-
-                  // Quick Actions
-                  Row(
-                    children: [
-                      _buildQuickAction(Icons.local_gas_station, 'Fuel up'),
-                      const SizedBox(width: 15),
-                      _buildQuickAction(Icons.history, 'Maintenance History'),
-                      const SizedBox(width: 15),
-                      _buildQuickAction(
-                          Icons.account_balance_wallet, 'Earnings'),
-                    ],
-                  ),
-                  const SizedBox(height: 25),
-
-                  // Map Placeholder — offline friendly gradient
-                  Container(
-                    height: 200,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(25),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color(0xFF1A2A3A),
-                          Color(0xFF0D1B2A),
-                        ],
-                      ),
-                      border: Border.all(color: Colors.white12),
-                    ),
-                    child: Stack(
+            child: RefreshIndicator(
+              onRefresh: _loadShipments,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Row
+                    Row(
                       children: [
-                        // Fake road lines
-                        Positioned(
-                          top: 70,
-                          left: 20,
-                          right: 20,
-                          child: Container(height: 2, color: Colors.white10),
-                        ),
-                        Positioned(
-                          top: 100,
-                          left: 40,
-                          right: 40,
-                          child: Container(height: 2, color: Colors.white10),
-                        ),
-                        Positioned(
-                          top: 130,
-                          left: 10,
-                          right: 60,
-                          child: Container(height: 2, color: Colors.white10),
-                        ),
-                        Center(
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.map_outlined,
-                                  color: Colors.white.withOpacity(0.3),
-                                  size: 50),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Dallas, TX → Atlanta, GA',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.5),
-                                  fontSize: 13,
-                                ),
+                        GestureDetector(
+                          onTap: () => _scaffoldKey.currentState?.openDrawer(),
+                          child: CircleAvatar(
+                            radius: 25,
+                            backgroundColor: const Color(0xFF1E1128),
+                            child: Text(
+                              username.isNotEmpty ? username[0].toUpperCase() : 'D',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 20,
                               ),
-                            ],
+                            ),
                           ),
                         ),
-                        Positioned(
-                          top: 12,
-                          right: 12,
+                        const SizedBox(width: 15),
+                        Expanded(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                             decoration: BoxDecoration(
-                              color: Colors.teal.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(20),
+                              color: const Color(0xFF1E1128),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
+                            child: Row(
                               children: [
-                                Icon(Icons.navigation,
-                                    color: Colors.white, size: 14),
-                                SizedBox(width: 4),
-                                Text('Navigate',
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 11)),
+                                Expanded(
+                                  child: Text(
+                                    'WELCOME ${username.toUpperCase()}!',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                                const Icon(Icons.search, size: 20, color: Colors.white70),
+                                const SizedBox(width: 15),
+                                const Icon(Icons.notifications, size: 20, color: Colors.white70),
                               ],
                             ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 100), // Space for bottom nav
-                ],
+                    const SizedBox(height: 25),
+                    
+                    // Date & Location
+                    Text(
+                      currentDate,
+                      style: const TextStyle(
+                        color: Colors.black87,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      '5th Avenue, New York, NYC',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 25),
+                    
+                    // Current Shipment Header
+                    const Text(
+                      'Current Shipment',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    if (_loading)
+                      const Center(child: Padding(
+                        padding: EdgeInsets.all(20.0),
+                        child: CircularProgressIndicator(color: Colors.black),
+                      )),
+                    if (!_loading && _shipments.isEmpty)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.black,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text('No shipment available',
+                                style: TextStyle(color: Colors.white70)),
+                            const SizedBox(height: 12),
+                            ElevatedButton(
+                              onPressed: _openLoadBoard,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.teal,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: const Text('Browse Loads'),
+                            )
+                          ],
+                        ),
+                      ),
+                    if (!_loading && _shipments.isNotEmpty)
+                      _buildShipmentCard(_shipments.first), // Only show 1 load
+                      
+                    const SizedBox(height: 20),
+                    
+                    // Actions row (3 cards)
+                    Row(
+                      children: [
+                        Expanded(child: _buildActionCard(Icons.local_gas_station, 'Fuel up')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildActionCard(Icons.history, 'Maintenance\nHistory')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _buildActionCard(Icons.payments, 'Earnings')),
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Map Placeholder
+                    Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.grey.shade300),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 5),
+                          )
+                        ],
+                        image: const DecorationImage(
+                          image: AssetImage('assets/map.png'),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    
+                    const SizedBox(height: 100), // padding for bottom nav
+                  ],
+                ),
               ),
             ),
           ),
         ],
       ),
+      extendBody: true,
+      bottomNavigationBar: CustomBottomNav(
+        currentIndex: 0,
+        onTap: _onNavTap,
+      ),
+    );
+  }
 
-      // Custom Bottom Navigation
-      bottomNavigationBar: _buildBottomNav(context),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: Container(
-          width: 70,
-          height: 70,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            gradient: LinearGradient(
-              colors: [Color(0xFFB066FE), Color(0xFF6A1B9A)],
+  Widget _buildShipmentCard(Shipment s) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(s.loadId.isNotEmpty ? s.loadId : '-',
+              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)),
+          const SizedBox(height: 2),
+          Text(s.commodity.isNotEmpty ? s.commodity : '-',
+              style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          const SizedBox(height: 12),
+          const Divider(color: Colors.white24, height: 1, thickness: 1),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
+                children: [
+                  const Icon(Icons.radio_button_checked, color: Colors.white, size: 18),
+                  Container(width: 2, height: 35, color: Colors.white24),
+                  const Icon(Icons.radio_button_unchecked, color: Colors.white, size: 18),
+                ],
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(s.origin.isNotEmpty ? s.origin : '-',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15)),
+                    Text(s.originDate.isNotEmpty ? s.originDate : '-',
+                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                    const SizedBox(height: 16),
+                    Text(s.destination.isNotEmpty ? s.destination : '-',
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 15)),
+                    Text(s.destinationDate.isNotEmpty ? s.destinationDate : '-',
+                        style: const TextStyle(color: Colors.white54, fontSize: 11)),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 30),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/shipment_detail', arguments: s).then((_) => _loadShipments()),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal.shade400,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Text('Go to Map', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionCard(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 28, color: Colors.black87),
+          const SizedBox(height: 12),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.black87,
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              height: 1.2,
             ),
           ),
-          child: const Center(
-            child: Text('AI',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawer() {
+    final user = _auth.currentUser;
+    final String username = user?.username ?? 'Driver';
+    final String initial = username.isNotEmpty ? username[0].toUpperCase() : 'D';
+
+    return Drawer(
+      backgroundColor: Colors.white,
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFC07BFE), Color(0xFF8A30FA)],
+              ),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircleAvatar(
+                  radius: 35,
+                  backgroundColor: Colors.white,
+                  child: Text(
+                    initial,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF8A30FA),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  user?.email ?? 'driver@flow.com',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          ListTile(
+            leading: const Icon(Icons.person, color: Colors.black87),
+            title: const Text('Manage Profile', style: TextStyle(color: Colors.black87)),
+            onTap: () {
+              Navigator.pop(context); // Close drawer
+              Navigator.pushNamed(context, '/profile');
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              _auth.logout();
+              Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+            },
+          ),
+        ],
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-    );
-  }
-
-  Widget _buildQuickAction(IconData icon, String label) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(15),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white12),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, size: 30),
-            const SizedBox(height: 10),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 10)),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBottomNav(BuildContext context) {
-    return BottomAppBar(
-      color: Colors.black,
-      shape: const CircularNotchedRectangle(),
-      notchMargin: 8,
-      child: SizedBox(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildNavItem(Icons.home_filled, 'Home', true),
-            _buildNavItem(Icons.assignment, 'Orders', false),
-            const SizedBox(width: 40), // Space for FAB
-            _buildNavItem(Icons.view_in_ar, 'Load board', false),
-            _buildNavItem(Icons.bar_chart, 'Statistics', false),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon,
-            color: isActive ? AppTheme.primaryPurple : Colors.white54,
-            size: 24),
-        Text(label,
-            style: TextStyle(
-                color: isActive ? AppTheme.primaryPurple : Colors.white54,
-                fontSize: 10)),
-      ],
     );
   }
 }

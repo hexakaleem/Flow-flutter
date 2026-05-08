@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/auth_service.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _mcController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  bool _isLoading = false;
+  String _error = '';
 
   @override
   Widget build(BuildContext context) {
@@ -27,8 +41,6 @@ class RegisterScreen extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 55),
-
-                // Logo icon only — tinted BLACK on register
                 Image.asset(
                   'assets/logo.png',
                   height: 80,
@@ -36,8 +48,6 @@ class RegisterScreen extends StatelessWidget {
                   colorBlendMode: BlendMode.srcIn,
                 ),
                 const SizedBox(height: 10),
-
-                // Separate FLOW text — Montserrat Alternates, BLACK on register
                 Text(
                   'FLOW',
                   style: GoogleFonts.montserratAlternates(
@@ -56,10 +66,7 @@ class RegisterScreen extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-
                 const Spacer(),
-
-                // Dark bottom sheet
                 Container(
                   padding: const EdgeInsets.all(30),
                   decoration: const BoxDecoration(
@@ -89,12 +96,13 @@ class RegisterScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 28),
-
+                      const SizedBox(height: 20),
                       Text('Username',
                           style: GoogleFonts.poppins(color: Colors.white70)),
                       const SizedBox(height: 8),
                       TextField(
+                        controller: _usernameController,
+                        enabled: !_isLoading,
                         decoration: InputDecoration(
                           hintText: 'Enter username...',
                           hintStyle: const TextStyle(color: Colors.white24),
@@ -107,12 +115,13 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         style: const TextStyle(color: Colors.white),
                       ),
-                      const SizedBox(height: 18),
-
+                      const SizedBox(height: 14),
                       Text('MC number',
                           style: GoogleFonts.poppins(color: Colors.white70)),
                       const SizedBox(height: 8),
                       TextField(
+                        controller: _mcController,
+                        enabled: !_isLoading,
                         decoration: InputDecoration(
                           hintText: 'Enter mc number...',
                           hintStyle: const TextStyle(color: Colors.white24),
@@ -125,12 +134,13 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         style: const TextStyle(color: Colors.white),
                       ),
-                      const SizedBox(height: 18),
-
+                      const SizedBox(height: 14),
                       Text('Password',
                           style: GoogleFonts.poppins(color: Colors.white70)),
                       const SizedBox(height: 8),
                       TextField(
+                        controller: _passwordController,
+                        enabled: !_isLoading,
                         obscureText: true,
                         decoration: InputDecoration(
                           hintText: 'Enter password...',
@@ -144,11 +154,22 @@ class RegisterScreen extends StatelessWidget {
                         ),
                         style: const TextStyle(color: Colors.white),
                       ),
-                      const SizedBox(height: 28),
-
+                      const SizedBox(height: 12),
+                      if (_error.isNotEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            _error,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      if (_error.isNotEmpty) const SizedBox(height: 10),
                       ElevatedButton(
-                        onPressed: () =>
-                            Navigator.pushReplacementNamed(context, '/home'),
+                        onPressed: _isLoading ? null : _handleRegister,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryPurple,
                           foregroundColor: Colors.white,
@@ -158,18 +179,28 @@ class RegisterScreen extends StatelessWidget {
                           elevation: 10,
                           shadowColor: AppTheme.primaryPurple.withOpacity(0.5),
                         ),
-                        child: Text(
-                          'Register',
-                          style: GoogleFonts.poppins(
-                              fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                height: 24,
+                                width: 24,
+                                child: CircularProgressIndicator(
+                                  valueColor:
+                                      AlwaysStoppedAnimation(Colors.white),
+                                ),
+                              )
+                            : Text(
+                                'Register',
+                                style: GoogleFonts.poppins(
+                                    fontSize: 18, fontWeight: FontWeight.bold),
+                              ),
                       ),
-
                       const SizedBox(height: 14),
                       Center(
                         child: TextButton(
-                          onPressed: () =>
-                              Navigator.pushReplacementNamed(context, '/login'),
+                          onPressed: _isLoading
+                              ? null
+                              : () => Navigator.pushReplacementNamed(
+                                  context, '/login'),
                           child: Text(
                             'Already have an account? Login',
                             style: GoogleFonts.poppins(
@@ -187,5 +218,58 @@ class RegisterScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleRegister() async {
+    setState(() {
+      _error = '';
+      _isLoading = true;
+    });
+
+    final username = _usernameController.text.trim();
+    final mc = _mcController.text.trim();
+    final pwd = _passwordController.text.trim();
+
+    if (username.isEmpty || mc.isEmpty || pwd.isEmpty) {
+      setState(() {
+        _error = 'Please fill all fields';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    if (pwd.length < 8) {
+      setState(() {
+        _error = 'Password must be at least 8 characters';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    final registered = await _authService.register(
+      username: username,
+      mcNumber: mc,
+      password: pwd,
+      email: '',
+      phoneNumber: '',
+      truckNumber: '',
+      companyName: '',
+    );
+    if (registered) {
+      if (mounted) Navigator.pushReplacementNamed(context, '/login');
+    } else {
+      setState(() {
+        _error = 'MC number already registered';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _mcController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }
