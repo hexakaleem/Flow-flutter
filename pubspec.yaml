@@ -22,7 +22,9 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/launcher.png"
+  image_path: "assets/launcher_padded.png"
+  adaptive_icon_background: "#000000"
+  adaptive_icon_foreground: "assets/launcher_padded.png"
 
 flutter:
   uses-material-design: true
