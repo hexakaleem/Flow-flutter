@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../models/vehicle_profile.dart';
 
 class VehicleRegistrationScreen extends StatefulWidget {
@@ -308,6 +309,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     setState(() => _isLoading = false);
 
     if (saved) {
+      // Fire notification
+      await NotificationService().notifyVehicleRegistered();
       Navigator.pop(context, true);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

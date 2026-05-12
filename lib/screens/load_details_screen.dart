@@ -7,6 +7,7 @@ import '../models/load.dart';
 import '../services/auth_service.dart';
 import '../services/load_service.dart';
 import '../services/shipment_service.dart';
+import '../services/notification_service.dart';
 import '../widgets/custom_bottom_nav.dart';
 
 class LoadDetailsScreen extends StatefulWidget {
@@ -125,6 +126,9 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
         );
 
         if (addSuccess) {
+          // Fire notification
+          await NotificationService().notifyLoadBooked(_load.loadNumber);
+
           setState(() {
             _isLoading = false;
           });

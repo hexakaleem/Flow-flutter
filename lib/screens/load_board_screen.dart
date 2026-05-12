@@ -75,26 +75,7 @@ class _LoadBoardScreenState extends State<LoadBoardScreen> {
                               fontSize: 18,
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.search,
-                              color: Colors.white, size: 18),
-                        ),
-                        const SizedBox(width: 10),
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.notifications_none,
-                              color: Colors.white, size: 18),
-                        ),
+                        )
                       ],
                     ),
                   ),

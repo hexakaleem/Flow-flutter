@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 import '../services/auth_service.dart';
 import '../services/shipment_service.dart';
+import '../services/notification_service.dart';
 import '../models/shipment.dart';
 import '../models/vehicle_profile.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -21,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final AuthService _auth = AuthService();
   final ShipmentService _shipmentService = ShipmentService();
+  final NotificationService _notifService = NotificationService();
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<Shipment> _shipments = [];
@@ -139,6 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onNavTap(int index) {
     if (index == 2) {
       _openLoadBoard();
+    } else if (index == 3) {
+      Navigator.pushNamed(context, '/stats');
     }
   }
 
@@ -196,57 +200,47 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const Spacer(),
-                        GestureDetector(
-                          onTap: () => setState(() => _isOnDuty = !_isOnDuty),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 250),
-                            width: 72,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: _isOnDuty
-                                  ? const Color(0xFF7A3FF2)
-                                  : Colors.grey.shade300,
-                            ),
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                AnimatedPositioned(
-                                  duration: const Duration(milliseconds: 250),
-                                  left: _isOnDuty ? null : 4,
-                                  right: _isOnDuty ? 4 : null,
-                                  child: Container(
-                                    width: 28,
-                                    height: 28,
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  left: _isOnDuty ? 8 : null,
-                                  right: _isOnDuty ? null : 8,
-                                  child: Text(
-                                    _isOnDuty ? 'ON' : 'OFF',
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: _isOnDuty
-                                          ? Colors.white
-                                          : Colors.black54,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                        Image.asset(
+                          'assets/logo.png',
+                          height: 36,
                         ),
                         const Spacer(),
-                        Icon(Icons.search, size: 22, color: Colors.grey.shade700),
+                        GestureDetector(
+                          onTap: () => Navigator.pushNamed(context, '/search'),
+                          child: Icon(Icons.search, size: 22, color: Colors.grey.shade700),
+                        ),
                         const SizedBox(width: 14),
-                        Icon(Icons.notifications_none_rounded,
-                            size: 22, color: Colors.grey.shade700),
+                        // ── Notification bell with unread badge ──────────────
+                        ListenableBuilder(
+                          listenable: _notifService,
+                          builder: (context, _) {
+                            return GestureDetector(
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/notifications'),
+                              child: Stack(
+                                clipBehavior: Clip.none,
+                                children: [
+                                  Icon(Icons.notifications_none_rounded,
+                                      size: 22,
+                                      color: Colors.grey.shade700),
+                                  if (_notifService.hasUnread)
+                                    Positioned(
+                                      top: -2,
+                                      right: -2,
+                                      child: Container(
+                                        width: 9,
+                                        height: 9,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.red,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -269,46 +263,107 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Welcome, $username!',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
                           Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Icon(Icons.location_on_rounded,
-                                  size: 14, color: Color(0xFFCE9FFC)),
-                              const SizedBox(width: 4),
                               Expanded(
-                                child: Text(
-                                  _locationText,
-                                  style: const TextStyle(
-                                    color: Color(0xFFCE9FFC),
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Welcome, $username!',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.location_on_rounded,
+                                            size: 14, color: Color(0xFFCE9FFC)),
+                                        const SizedBox(width: 4),
+                                        Expanded(
+                                          child: Text(
+                                            _locationText,
+                                            style: const TextStyle(
+                                              color: Color(0xFFCE9FFC),
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.calendar_today_rounded,
+                                            size: 13, color: Colors.white54),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          currentDate,
+                                          style: const TextStyle(
+                                            color: Colors.white54,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              const Icon(Icons.calendar_today_rounded,
-                                  size: 13, color: Colors.white54),
-                              const SizedBox(width: 4),
-                              Text(
-                                currentDate,
-                                style: const TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    _isOnDuty ? 'On Duty' : 'Off Duty',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: _isOnDuty
+                                          ? const Color(0xFFCE9FFC)
+                                          : Colors.white38,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  GestureDetector(
+                                    onTap: () => setState(() => _isOnDuty = !_isOnDuty),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(milliseconds: 250),
+                                      width: 56,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(14),
+                                        color: _isOnDuty
+                                            ? const Color(0xFF7A3FF2)
+                                            : Colors.white24,
+                                      ),
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          AnimatedPositioned(
+                                            duration: const Duration(milliseconds: 250),
+                                            left: _isOnDuty ? null : 3,
+                                            right: _isOnDuty ? 3 : null,
+                                            child: Container(
+                                              width: 22,
+                                              height: 22,
+                                              decoration: const BoxDecoration(
+                                                color: Colors.white,
+                                                shape: BoxShape.circle,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -655,29 +710,83 @@ class _HomeScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          Column(
             children: [
-              _buildVehicleSummaryChip('Equipment', profile.equipmentType,
-                  accent: true),
-              _buildVehicleSummaryChip('Plate', profile.licensePlate),
-              _buildVehicleSummaryChip('VIN', profile.vinNumber),
-              _buildVehicleSummaryChip('Year', profile.year),
-              _buildVehicleSummaryChip(
-                  'Make / Model', '${profile.make} ${profile.model}'),
-              _buildVehicleSummaryChip('Trailer',
-                  '${profile.trailerLength} ft x ${profile.trailerWidth} ft'),
-              _buildVehicleSummaryChip(
-                  'Max Weight', '${profile.maxWeight} lbs'),
-              _buildVehicleSummaryChip('Registration Doc',
-                  profile.registrationDocumentLabel.isNotEmpty
-                      ? profile.registrationDocumentLabel
-                      : 'Not uploaded'),
-              _buildVehicleSummaryChip('Insurance Doc',
-                  profile.insuranceDocumentLabel.isNotEmpty
-                      ? profile.insuranceDocumentLabel
-                      : 'Not uploaded'),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Equipment', profile.equipmentType,
+                        accent: true),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Plate', profile.licensePlate),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'VIN', profile.vinNumber),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Year', profile.year),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Make / Model',
+                        '${profile.make} ${profile.model}'),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Trailer',
+                        '${profile.trailerLength} ft x ${profile.trailerWidth} ft'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Max Weight', '${profile.maxWeight} lbs'),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Registration Doc',
+                        profile.registrationDocumentLabel.isNotEmpty
+                            ? profile.registrationDocumentLabel
+                            : 'Not uploaded'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip(
+                        'Insurance Doc',
+                        profile.insuranceDocumentLabel.isNotEmpty
+                            ? profile.insuranceDocumentLabel
+                            : 'Not uploaded'),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: SizedBox()),
+                ],
+              ),
             ],
           ),
         ],
@@ -688,6 +797,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildVehicleSummaryChip(String label, String value,
       {bool accent = false}) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: accent
@@ -719,6 +829,8 @@ class _HomeScreenState extends State<HomeScreen> {
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
         ],
       ),

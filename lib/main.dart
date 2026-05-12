@@ -11,6 +11,10 @@ import 'screens/customer_support_screen.dart';
 import 'screens/navigation_screen.dart';
 import 'screens/vehicle_registration_screen.dart';
 import 'screens/fuel_log_screen.dart';
+import 'screens/stats_screen.dart';
+import 'screens/search_screen.dart';
+import 'screens/notification_screen.dart';
+import 'services/notification_service.dart';
 import 'models/load.dart';
 import 'models/shipment.dart';
 import 'theme/app_theme.dart';
@@ -21,6 +25,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Restore persisted session (if any) before the widget tree is built.
   final bool loggedIn = await AuthService.tryAutoLogin();
+  // Load persisted notifications.
+  await NotificationService().load();
   runApp(FlowApp(startLoggedIn: loggedIn));
 }
 
@@ -73,6 +79,9 @@ class FlowApp extends StatelessWidget {
           return VehicleRegistrationScreen(isEditing: isEditing);
         },
         '/fuel_log': (context) => const FuelLogScreen(),
+        '/stats': (context) => const StatsScreen(),
+        '/search': (context) => const SearchScreen(),
+        '/notifications': (context) => const NotificationScreen(),
       },
     );
   }

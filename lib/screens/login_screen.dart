@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -231,6 +232,13 @@ class _LoginScreenState extends State<LoginScreen> {
     final success =
         await _authService.login(mcNumber: mcNumber, password: password);
     if (success) {
+      // Fire account-created notification only on first ever login
+      final notifSvc = NotificationService();
+      await notifSvc.load();
+      if (notifSvc.notifications.isEmpty) {
+        final username = _authService.currentUser?.username ?? 'Driver';
+        await notifSvc.notifyAccountCreated(username);
+      }
       if (mounted) Navigator.pushReplacementNamed(context, '/home');
     } else {
       setState(() {
