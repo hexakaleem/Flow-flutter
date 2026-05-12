@@ -284,14 +284,11 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                       Expanded(
                         child: TextField(
                           controller: _messageController,
-                          minLines: 1,
-                          maxLines: 4,
                           textInputAction: TextInputAction.send,
                           onSubmitted: (_) => _sendMessage(),
                           style: const TextStyle(color: Colors.black87),
                           decoration: InputDecoration(
-                            hintText:
-                                'Ask about loads, shipments, navigation...',
+                            hintText: 'Ask about loads, navigation...',
                             hintStyle:
                                 const TextStyle(color: Colors.black38),
                             filled: true,
@@ -301,7 +298,7 @@ class _CustomerSupportScreenState extends State<CustomerSupportScreen> {
                               borderSide: BorderSide.none,
                             ),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 14),
+                                horizontal: 16, vertical: 17),
                           ),
                         ),
                       ),

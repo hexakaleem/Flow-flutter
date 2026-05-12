@@ -6,6 +6,7 @@ class FuelLog {
   final double? latitude;
   final double? longitude;
   final DateTime date;
+  final String? receiptImagePath;
 
   const FuelLog({
     required this.id,
@@ -15,6 +16,7 @@ class FuelLog {
     this.latitude,
     this.longitude,
     required this.date,
+    this.receiptImagePath,
   });
 
   Map<String, dynamic> toJson() {
@@ -26,6 +28,7 @@ class FuelLog {
       'latitude': latitude,
       'longitude': longitude,
       'date': date.toIso8601String(),
+      'receiptImagePath': receiptImagePath,
     };
   }
 
@@ -38,6 +41,7 @@ class FuelLog {
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
+      receiptImagePath: json['receiptImagePath'] as String?,
     );
   }
 }

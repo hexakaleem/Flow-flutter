@@ -188,7 +188,9 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                   const Expanded(
                     child: Text('VIN Decoded',
                         style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: Colors.white)),
                   ),
                 ],
               ),
@@ -198,14 +200,15 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                 children: [
                   Text(vin,
                       style: const TextStyle(
-                          color: Colors.grey, fontSize: 12,
+                          color: Colors.white,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 16),
                   ...details.map((d) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Text(d,
                             style: const TextStyle(
-                                fontSize: 14, color: Colors.black87)),
+                                fontSize: 14, color: Colors.white)),
                       )),
                 ],
               ),
@@ -468,8 +471,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
           foregroundColor: Colors.white,
           disabledBackgroundColor: Colors.teal.shade300,
           disabledForegroundColor: Colors.white70,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
@@ -577,17 +580,16 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
           ),
           const SizedBox(height: 10),
           GestureDetector(
-            onTap: () =>
-                _pickDocument(isRegistration: isRegistration, documentType: documentType),
+            onTap: () => _pickDocument(
+                isRegistration: isRegistration, documentType: documentType),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: hasFile
-                      ? const Color(0xFF8E5AF7)
-                      : Colors.grey.shade300,
+                  color:
+                      hasFile ? const Color(0xFF8E5AF7) : Colors.grey.shade300,
                   width: hasFile ? 1.5 : 1,
                 ),
               ),
@@ -614,8 +616,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                         color: hasFile
                             ? const Color(0xFF1E1128)
                             : Colors.grey.shade600,
-                        fontWeight:
-                            hasFile ? FontWeight.w600 : FontWeight.w400,
+                        fontWeight: hasFile ? FontWeight.w600 : FontWeight.w400,
                         fontSize: 13,
                       ),
                       maxLines: 1,
@@ -694,9 +695,11 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
             child: Column(
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 15, vertical: 12),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E1128),
                       borderRadius: BorderRadius.circular(15),
@@ -725,7 +728,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                     child: Form(
                       key: _vehicleFormKey,
                       child: Container(
@@ -751,26 +755,32 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                 Container(
                                   padding: const EdgeInsets.all(10),
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFF8E5AF7).withOpacity(0.12),
+                                    color: const Color(0xFF8E5AF7)
+                                        .withOpacity(0.12),
                                     shape: BoxShape.circle,
                                   ),
-                                  child: const Icon(Icons.local_shipping_outlined,
+                                  child: const Icon(
+                                      Icons.local_shipping_outlined,
                                       color: Color(0xFF7A3FF2)),
                                 ),
                                 const SizedBox(width: 12),
                                 const Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Vehicle Registration',
                                         style: TextStyle(
-                                            fontSize: 18, fontWeight: FontWeight.w800),
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w800),
                                       ),
                                       SizedBox(height: 3),
                                       Text(
                                         'Enter your VIN and tap Lookup to auto-fill details.',
-                                        style: TextStyle(color: Colors.black54, fontSize: 12),
+                                        style: TextStyle(
+                                            color: Colors.black54,
+                                            fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -787,7 +797,9 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                     'VIN Number',
                                     _vinController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                     width: double.infinity,
                                   ),
                                 ),
@@ -806,12 +818,16 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                     child: DropdownButtonFormField<String>(
                                       isExpanded: true,
                                       value: _equipmentType,
-                                    hint: const Text(
-                                      'Not Selected',
-                                      style: TextStyle(color: Colors.grey, fontSize: 14),
-                                    ),
-                                    dropdownColor: Colors.white,
-                                    style: const TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400),
+                                      hint: const Text(
+                                        'Not Selected',
+                                        style: TextStyle(
+                                            color: Colors.grey, fontSize: 14),
+                                      ),
+                                      dropdownColor: Colors.white,
+                                      style: const TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w400),
                                       decoration: InputDecoration(
                                         labelText: 'Equipment Type',
                                         labelStyle: TextStyle(
@@ -822,20 +838,54 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                         filled: true,
                                         fillColor: const Color(0xFFF7F6FB),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(12),
-                                          borderSide: BorderSide(color: Colors.grey.shade200),
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                          borderSide: BorderSide(
+                                              color: Colors.grey.shade200),
                                         ),
                                       ),
-                                    items: const [
-                                      DropdownMenuItem(
-                                          value: 'Flatbed', child: Text('Flatbed', style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400))),
-                                      DropdownMenuItem(
-                                          value: 'Dry Van', child: Text('Dry Van', style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400))),
-                                      DropdownMenuItem(value: 'Reefer', child: Text('Reefer', style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400))),
-                                      DropdownMenuItem(
-                                          value: 'Step Deck', child: Text('Step Deck', style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400))),
-                                      DropdownMenuItem(value: 'Other', child: Text('Other', style: TextStyle(color: Colors.black87, fontSize: 14, fontWeight: FontWeight.w400))),
-                                    ],
+                                      items: const [
+                                        DropdownMenuItem(
+                                            value: 'Flatbed',
+                                            child: Text('Flatbed',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400))),
+                                        DropdownMenuItem(
+                                            value: 'Dry Van',
+                                            child: Text('Dry Van',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400))),
+                                        DropdownMenuItem(
+                                            value: 'Reefer',
+                                            child: Text('Reefer',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400))),
+                                        DropdownMenuItem(
+                                            value: 'Step Deck',
+                                            child: Text('Step Deck',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400))),
+                                        DropdownMenuItem(
+                                            value: 'Other',
+                                            child: Text('Other',
+                                                style: TextStyle(
+                                                    color: Colors.black87,
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        FontWeight.w400))),
+                                      ],
                                       onChanged: (value) {
                                         setState(() => _equipmentType = value);
                                       },
@@ -845,43 +895,57 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                     'License Plate',
                                     _licensePlateController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Year',
                                     _yearController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Make',
                                     _makeController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Model',
                                     _modelController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Max Weight (lbs)',
                                     _maxWeightController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Trailer Length (ft)',
                                     _trailerLengthController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                   _buildVehicleField(
                                     'Trailer Width (ft)',
                                     _trailerWidthController,
                                     validator: (value) =>
-                                        value == null || value.trim().isEmpty ? 'Required' : null,
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
                                   ),
                                 ],
                               ),
@@ -889,12 +953,14 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                             const SizedBox(height: 18),
                             const Text(
                               'Documents',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800),
+                              style: TextStyle(
+                                  fontSize: 15, fontWeight: FontWeight.w800),
                             ),
                             const SizedBox(height: 10),
                             const Text(
                               'Vehicle registration and insurance can be added as either an image or a PDF.',
-                              style: TextStyle(color: Colors.black54, fontSize: 12),
+                              style: TextStyle(
+                                  color: Colors.black54, fontSize: 12),
                             ),
                             const SizedBox(height: 16),
                             _buildDocumentSection(
@@ -918,10 +984,13 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                     onPressed: _resetForm,
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: const Color(0xFF1E1128),
-                                      side: BorderSide(color: Colors.grey.shade300),
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      side: BorderSide(
+                                          color: Colors.grey.shade300),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14)),
+                                          borderRadius:
+                                              BorderRadius.circular(14)),
                                     ),
                                     child: const Text('Reset'),
                                   ),
@@ -929,13 +998,17 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: ElevatedButton(
-                                    onPressed: _isLoading ? null : _saveVehicleRegistration,
+                                    onPressed: _isLoading
+                                        ? null
+                                        : _saveVehicleRegistration,
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: const Color(0xFF8E5AF7),
                                       foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14)),
+                                          borderRadius:
+                                              BorderRadius.circular(14)),
                                     ),
                                     child: _isLoading
                                         ? const SizedBox(

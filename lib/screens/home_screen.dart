@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showCongratulations() {
     setState(() => _showCongrats = true);
-    Future.delayed(const Duration(seconds: 5), () {
+    Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
         setState(() => _showCongrats = false);
       }
@@ -332,7 +332,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Expanded(
                             child: _buildActionCard(
                             Icons.support_agent_rounded,
-                            'Customer Support',
+                            'Support',
                             onTap: () => Navigator.pushNamed(
                               context, '/customer_support'))),
                       ],
@@ -662,7 +662,6 @@ class _HomeScreenState extends State<HomeScreen> {
               _buildVehicleSummaryChip('Equipment', profile.equipmentType,
                   accent: true),
               _buildVehicleSummaryChip('Plate', profile.licensePlate),
-              _buildVehicleSummaryChip('State', profile.state),
               _buildVehicleSummaryChip('VIN', profile.vinNumber),
               _buildVehicleSummaryChip('Year', profile.year),
               _buildVehicleSummaryChip(
@@ -671,11 +670,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   '${profile.trailerLength} ft x ${profile.trailerWidth} ft'),
               _buildVehicleSummaryChip(
                   'Max Weight', '${profile.maxWeight} lbs'),
-              _buildVehicleSummaryChip(
-                  'Fleet ID',
-                  profile.internalFleetId.isEmpty
-                      ? 'Not set'
-                      : profile.internalFleetId),
               _buildVehicleSummaryChip('Registration Doc',
                   profile.registrationDocumentLabel.isNotEmpty
                       ? profile.registrationDocumentLabel

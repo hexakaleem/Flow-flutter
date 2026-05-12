@@ -1,8 +1,13 @@
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../models/fuel_log.dart';
 import '../services/fuel_service.dart';
+import '../services/receipt_ocr_parser.dart';
 
 class FuelLogScreen extends StatefulWidget {
   const FuelLogScreen({super.key});
@@ -17,14 +22,18 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
   final TextEditingController _expenseController = TextEditingController();
   final TextEditingController _quantityController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   List<FuelLog> _logs = [];
   bool _loading = true;
   bool _saving = false;
   bool _gettingLocation = false;
+  bool _scanningReceipt = false;
   DateTime _selectedDate = DateTime.now();
   double? _currentLatitude;
   double? _currentLongitude;
+  File? _receiptImage;
+  ParsedReceipt? _parsedReceipt;
 
   @override
   void initState() {
@@ -96,12 +105,36 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
         ),
       );
 
+      // Reverse geocode to get readable address
+      String locationName =
+          '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+      try {
+        final url = Uri.parse('https://nominatim.openstreetmap.org/reverse'
+            '?lat=${position.latitude}&lon=${position.longitude}&format=json');
+        final response =
+            await http.get(url, headers: {'User-Agent': 'FlowDriverApp/1.0'});
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body) as Map<String, dynamic>;
+          final addr = data['address'] as Map<String, dynamic>? ?? {};
+          final suburb =
+              addr['suburb'] ?? addr['neighbourhood'] ?? addr['village'] ?? '';
+          final city = addr['city'] ?? addr['town'] ?? addr['county'] ?? '';
+          final parts =
+              [suburb, city].where((s) => (s as String).isNotEmpty).toList();
+          if (parts.isNotEmpty) {
+            locationName = parts.take(2).join(', ');
+          }
+        }
+      } catch (e) {
+        // If reverse geocoding fails, keep coordinates as fallback
+      }
+
       if (mounted) {
         setState(() {
           _currentLatitude = position.latitude;
           _currentLongitude = position.longitude;
-          _locationController.text =
-              '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
+          _locationController.text = locationName;
         });
       }
     } catch (e) {
@@ -116,6 +149,64 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
     } finally {
       if (mounted) setState(() => _gettingLocation = false);
     }
+  }
+
+  Future<void> _pickReceiptImage(ImageSource source) async {
+    final picked = await _imagePicker.pickImage(
+      source: source,
+      maxWidth: 1200,
+      maxHeight: 1200,
+      imageQuality: 85,
+    );
+    if (picked == null || !mounted) return;
+
+    setState(() {
+      _receiptImage = File(picked.path);
+      _scanningReceipt = true;
+      _parsedReceipt = null;
+    });
+
+    try {
+      final parsed = await ReceiptOcrParser.parse(_receiptImage!);
+      if (!mounted) return;
+      setState(() {
+        _parsedReceipt = parsed;
+        _scanningReceipt = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _scanningReceipt = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('OCR failed: $e')),
+      );
+    }
+  }
+
+  void _applyParsedValues() {
+    if (_parsedReceipt == null) return;
+    if (_parsedReceipt!.expense != null) {
+      _expenseController.text = _parsedReceipt!.expense!.toStringAsFixed(2);
+    }
+    if (_parsedReceipt!.quantity != null) {
+      _quantityController.text = _parsedReceipt!.quantity!.toStringAsFixed(1);
+    }
+    setState(() {
+      _receiptImage = null;
+      _parsedReceipt = null;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Receipt values applied to the form.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _clearReceipt() {
+    setState(() {
+      _receiptImage = null;
+      _parsedReceipt = null;
+    });
   }
 
   Future<void> _pickDate() async {
@@ -153,6 +244,7 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
       latitude: _currentLatitude,
       longitude: _currentLongitude,
       date: _selectedDate,
+      receiptImagePath: _receiptImage?.path,
     );
 
     final success = await _fuelService.addFuelLog(log);
@@ -167,6 +259,8 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
         _currentLatitude = null;
         _currentLongitude = null;
         _selectedDate = DateTime.now();
+        _receiptImage = null;
+        _parsedReceipt = null;
       });
       await _loadLogs();
       if (!mounted) return;
@@ -350,8 +444,7 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                             .withOpacity(0.12),
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(
-                                          Icons.local_gas_station,
+                                      child: const Icon(Icons.local_gas_station,
                                           color: Color(0xFF7A3FF2)),
                                     ),
                                     const SizedBox(width: 12),
@@ -380,7 +473,7 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                 ),
                                 const SizedBox(height: 18),
                                 _buildField(
-                                  'Expense (USD)',
+                                  'Expense (PKR/USD)',
                                   _expenseController,
                                   hint: 'e.g. 150.00',
                                   keyboardType:
@@ -398,9 +491,9 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 _buildField(
-                                  'Quantity (gallons)',
+                                  'Quantity (Liters/Gallons)',
                                   _quantityController,
-                                  hint: 'e.g. 50.5',
+                                  hint: 'e.g. 15.20',
                                   keyboardType:
                                       const TextInputType.numberWithOptions(
                                           decimal: true),
@@ -457,8 +550,7 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                     child: Row(
                                       children: [
                                         const Icon(Icons.calendar_today,
-                                            size: 18,
-                                            color: Color(0xFF8E5AF7)),
+                                            size: 18, color: Color(0xFF8E5AF7)),
                                         const SizedBox(width: 12),
                                         Text(
                                           dateFormat.format(_selectedDate),
@@ -473,6 +565,180 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                             size: 18, color: Colors.black54),
                                       ],
                                     ),
+                                  ),
+                                ),
+                                const SizedBox(height: 18),
+                                // ── Receipt upload section ─────────────
+                                Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF7F6FB),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border:
+                                        Border.all(color: Colors.grey.shade200),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Row(
+                                        children: [
+                                          Icon(
+                                            Icons.receipt_long_outlined,
+                                            size: 18,
+                                            color: Color(0xFF7A3FF2),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Paid by card? Upload receipt',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 13,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 10),
+                                      if (_receiptImage == null) ...[
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: _ReceiptSourceButton(
+                                                icon: Icons.camera_alt_outlined,
+                                                label: 'Camera',
+                                                onTap: () => _pickReceiptImage(
+                                                    ImageSource.camera),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: _ReceiptSourceButton(
+                                                icon: Icons.photo_outlined,
+                                                label: 'Gallery',
+                                                onTap: () => _pickReceiptImage(
+                                                    ImageSource.gallery),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ] else ...[
+                                        Row(
+                                          children: [
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                              child: Image.file(
+                                                _receiptImage!,
+                                                width: 70,
+                                                height: 70,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: _scanningReceipt
+                                                  ? const Row(
+                                                      children: [
+                                                        SizedBox(
+                                                          width: 16,
+                                                          height: 16,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                            strokeWidth: 2,
+                                                            color: Color(
+                                                                0xFF8E5AF7),
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                          'Scanning receipt...',
+                                                          style: TextStyle(
+                                                            fontSize: 13,
+                                                            color:
+                                                                Colors.black54,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    )
+                                                  : _parsedReceipt != null
+                                                      ? Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            if (_parsedReceipt!
+                                                                    .expense !=
+                                                                null)
+                                                              Text(
+                                                                'Expense: ${_parsedReceipt!.currency ?? 'PKR/USD'} ${_parsedReceipt!.expense!.toStringAsFixed(2)}',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 13,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                              ),
+                                                            if (_parsedReceipt!
+                                                                    .quantity !=
+                                                                null)
+                                                              Text(
+                                                                'Quantity: ${_parsedReceipt!.quantity!.toStringAsFixed(1)} ${_parsedReceipt!.unit ?? 'litres/gallons'}',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  fontSize: 13,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: Colors
+                                                                      .black87,
+                                                                ),
+                                                              ),
+                                                            if (_parsedReceipt!
+                                                                        .expense ==
+                                                                    null &&
+                                                                _parsedReceipt!
+                                                                        .quantity ==
+                                                                    null)
+                                                              const Text(
+                                                                'Could not read values. Type manually.',
+                                                                style:
+                                                                    TextStyle(
+                                                                  fontSize: 12,
+                                                                  color: Colors
+                                                                      .orange,
+                                                                ),
+                                                              ),
+                                                          ],
+                                                        )
+                                                      : const SizedBox(),
+                                            ),
+                                            if (!_scanningReceipt &&
+                                                _parsedReceipt != null &&
+                                                (_parsedReceipt!.expense !=
+                                                        null ||
+                                                    _parsedReceipt!.quantity !=
+                                                        null))
+                                              TextButton(
+                                                onPressed: _applyParsedValues,
+                                                child: const Text('Apply'),
+                                              ),
+                                            IconButton(
+                                              icon: const Icon(Icons.close,
+                                                  size: 18,
+                                                  color: Colors.black54),
+                                              onPressed: _clearReceipt,
+                                              tooltip: 'Remove',
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ],
                                   ),
                                 ),
                                 const SizedBox(height: 18),
@@ -493,8 +759,7 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
                                         ? const SizedBox(
                                             width: 20,
                                             height: 20,
-                                            child:
-                                                CircularProgressIndicator(
+                                            child: CircularProgressIndicator(
                                               color: Colors.white,
                                               strokeWidth: 2,
                                             ),
@@ -648,6 +913,22 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
               ],
             ),
           ),
+          if (log.receiptImagePath != null)
+            Padding(
+              padding: const EdgeInsets.only(right: 8, top: 4),
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF8E5AF7).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  Icons.receipt_long_outlined,
+                  size: 14,
+                  color: Color(0xFF7A3FF2),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
             onPressed: () => _deleteLog(log.id),
@@ -660,9 +941,52 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
 
   @override
   void dispose() {
+    ReceiptOcrParser.dispose();
     _expenseController.dispose();
     _quantityController.dispose();
     _locationController.dispose();
     super.dispose();
+  }
+}
+
+class _ReceiptSourceButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ReceiptSourceButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF7A3FF2)),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
