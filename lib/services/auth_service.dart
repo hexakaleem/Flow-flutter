@@ -304,6 +304,8 @@ class AuthService {
         'specs': {
           'maxWeight': int.tryParse(profile.maxWeight.replaceAll(',', '')) ?? 0,
           'length': int.tryParse(profile.trailerLength) ?? 0,
+          'width': int.tryParse(profile.trailerWidth) ?? 0,
+          'height': int.tryParse(profile.trailerHeight) ?? 0,
           'hasLiftgate': profile.hasLiftgate,
           'isHazmatCertified': profile.isHazmatCertified,
         },
@@ -387,7 +389,8 @@ class AuthService {
       make: truck['make']?.toString() ?? '',
       model: truck['vehicleModel']?.toString() ?? '',
       trailerLength: specs['length']?.toString() ?? '',
-      trailerWidth: '',
+      trailerWidth: specs['width']?.toString() ?? '',
+      trailerHeight: specs['height']?.toString() ?? '',
       maxWeight: specs['maxWeight']?.toString() ?? '',
       internalFleetId: truck['internalId']?.toString() ?? '',
       registrationDocumentLabel: truck['registrationNumber']?.toString() ?? '',

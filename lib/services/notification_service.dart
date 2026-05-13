@@ -150,6 +150,17 @@ class NotificationService extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> clearAll() async {
+    try {
+      await _api.delete('/notifications');
+    } catch (e) {
+      debugPrint('Failed to clear notifications on server: $e');
+    }
+    _notifications.clear();
+    await _saveLocal();
+    notifyListeners();
+  }
+
   // ── Convenience factory methods ────────────────────────────────────────────
 
   Future<void> notifyAccountCreated(String username) => add(

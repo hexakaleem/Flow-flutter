@@ -144,20 +144,65 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             ),
                           ),
                         ),
-                        if (_svc.hasUnread)
+                        if (_svc.notifications.isNotEmpty) ...[
+                          if (_svc.hasUnread) ...[
+                            GestureDetector(
+                              onTap: () async => await _svc.markAllRead(),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF7A3FF2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  'Mark all read',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
                           GestureDetector(
                             onTap: () async {
-                              await _svc.markAllRead();
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) => AlertDialog(
+                                  title: const Text('Clear all?'),
+                                  content: const Text(
+                                      'Are you sure you want to delete all notifications?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      child: const Text('Clear',
+                                          style: TextStyle(color: Colors.red)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                await _svc.clearAll();
+                              }
                             },
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 10, vertical: 5),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF7A3FF2),
+                                color: Colors.white.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                    color: Colors.white.withOpacity(0.3)),
                               ),
                               child: const Text(
-                                'Mark all read',
+                                'Clear all',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 11,
@@ -166,6 +211,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               ),
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),

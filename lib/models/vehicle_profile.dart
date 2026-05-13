@@ -8,6 +8,7 @@ class VehicleProfile {
   final String model;
   final String trailerLength;
   final String trailerWidth;
+  final String trailerHeight;
   final String maxWeight;
   final String internalFleetId;
   final String registrationDocumentLabel;
@@ -29,6 +30,7 @@ class VehicleProfile {
     required this.model,
     required this.trailerLength,
     required this.trailerWidth,
+    required this.trailerHeight,
     required this.maxWeight,
     required this.internalFleetId,
     required this.registrationDocumentLabel,
@@ -52,6 +54,7 @@ class VehicleProfile {
       'model': model,
       'trailerLength': trailerLength,
       'trailerWidth': trailerWidth,
+      'trailerHeight': trailerHeight,
       'maxWeight': maxWeight,
       'internalFleetId': internalFleetId,
       'registrationDocumentLabel': registrationDocumentLabel,
@@ -76,6 +79,7 @@ class VehicleProfile {
       model: json['model'] ?? '',
       trailerLength: json['trailerLength'] ?? '',
       trailerWidth: json['trailerWidth'] ?? '',
+      trailerHeight: json['trailerHeight'] ?? '',
       maxWeight: json['maxWeight'] ?? '',
       internalFleetId: json['internalFleetId'] ?? '',
       registrationDocumentLabel: json['registrationDocumentLabel'] ?? '',

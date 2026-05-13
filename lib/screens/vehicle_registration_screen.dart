@@ -31,6 +31,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
   final TextEditingController _trailerLengthController =
       TextEditingController();
   final TextEditingController _trailerWidthController = TextEditingController();
+  final TextEditingController _trailerHeightController = TextEditingController();
   final TextEditingController _maxWeightController = TextEditingController();
   final TextEditingController _internalFleetIdController =
       TextEditingController();
@@ -74,6 +75,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     _modelController.text = profile.model;
     _trailerLengthController.text = profile.trailerLength;
     _trailerWidthController.text = profile.trailerWidth;
+    _trailerHeightController.text = profile.trailerHeight;
     _maxWeightController.text = profile.maxWeight;
     _internalFleetIdController.text = profile.internalFleetId;
     _registrationDocumentController.text = profile.registrationDocumentLabel;
@@ -294,6 +296,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       model: _modelController.text.trim(),
       trailerLength: _trailerLengthController.text.trim(),
       trailerWidth: _trailerWidthController.text.trim(),
+      trailerHeight: _trailerHeightController.text.trim(),
       maxWeight: _maxWeightController.text.trim(),
       internalFleetId: '',
       registrationDocumentLabel: _registrationDocumentController.text.trim(),
@@ -347,6 +350,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     _modelController.clear();
     _trailerLengthController.clear();
     _trailerWidthController.clear();
+    _trailerHeightController.clear();
     _maxWeightController.clear();
     _internalFleetIdController.clear();
     _registrationDocumentController.clear();
@@ -947,6 +951,12 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                                     fontWeight:
                                                         FontWeight.w400))),
                                       ],
+                                      validator: (value) {
+                                        if (value == null || value.isEmpty) {
+                                          return 'Required';
+                                        }
+                                        return null;
+                                      },
                                       onChanged: (value) {
                                         setState(() => _equipmentType = value);
                                       },
@@ -955,58 +965,124 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   _buildVehicleField(
                                     'License Plate',
                                     _licensePlateController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      if (!RegExp(r'^[a-zA-Z0-9]+$')
+                                          .hasMatch(value.trim())) {
+                                        return 'Alphanumeric only';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Year',
                                     _yearController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Make',
                                     _makeController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Model',
                                     _modelController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Max Weight (lbs)',
                                     _maxWeightController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      if (!RegExp(r'^\d{1,7}$')
+                                          .hasMatch(value.trim())) {
+                                        return 'Invalid Weight';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Trailer Length (ft)',
                                     _trailerLengthController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      if (!RegExp(r'^\d{1,4}$')
+                                          .hasMatch(value.trim())) {
+                                        return 'Invalid Length';
+                                      }
+                                      return null;
+                                    },
                                   ),
                                   _buildVehicleField(
                                     'Trailer Width (ft)',
                                     _trailerWidthController,
-                                    validator: (value) =>
-                                        value == null || value.trim().isEmpty
-                                            ? 'Required'
-                                            : null,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      if (!RegExp(r'^\d{1,3}$')
+                                          .hasMatch(value.trim())) {
+                                        return 'Invalid width';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  _buildVehicleField(
+                                    'Trailer Height (ft)',
+                                    _trailerHeightController,
+                                    validator: (value) {
+                                      if (value == null || value.trim().isEmpty) {
+                                        return 'Required';
+                                      }
+                                      if (!RegExp(r'^\d{1,3}$')
+                                          .hasMatch(value.trim())) {
+                                        return 'Invalid height';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildToggleChip(
+                                      label: 'Liftgate',
+                                      value: _hasLiftgate,
+                                      onChanged: (v) =>
+                                          setState(() => _hasLiftgate = v),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildToggleChip(
+                                      label: 'Hazmat Certified',
+                                      value: _isHazmatCertified,
+                                      onChanged: (v) => setState(
+                                          () => _isHazmatCertified = v),
+                                    ),
                                   ),
                                 ],
                               ),
@@ -1131,6 +1207,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     _modelController.dispose();
     _trailerLengthController.dispose();
     _trailerWidthController.dispose();
+    _trailerHeightController.dispose();
     _maxWeightController.dispose();
     _internalFleetIdController.dispose();
     _registrationDocumentController.dispose();

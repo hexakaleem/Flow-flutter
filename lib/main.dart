@@ -14,6 +14,7 @@ import 'screens/fuel_log_screen.dart';
 import 'screens/stats_screen.dart';
 import 'screens/search_screen.dart';
 import 'screens/notification_screen.dart';
+import 'screens/tasks_screen.dart';
 import 'services/notification_service.dart';
 import 'models/load.dart';
 import 'models/shipment.dart';
@@ -72,6 +73,7 @@ class FlowApp extends StatelessWidget {
         '/search': (context) => const SearchScreen(),
         '/notifications': (context) => const NotificationScreen(),
         '/order_history': (context) => const OrderHistoryScreen(),
+        '/tasks': (context) => const TasksScreen(),
       },
     );
   }
