@@ -60,6 +60,9 @@ class AuthService {
 
         // Also try to load vehicle profile
         await instance._loadVehicleProfile();
+        
+        // Auto-complete onboarding steps if needed (in case they finished on web)
+        await instance._completeOnboardingIfNeeded();
 
         return true;
       }
@@ -155,8 +158,8 @@ class AuthService {
     try {
       // Complete profile step
       await _api.patch('/auth/onboarding/profile', body: {
-        'firstName': _currentUser!.firstName,
-        'lastName': _currentUser!.lastName,
+        'firstName': _currentUser!.firstName.isNotEmpty ? _currentUser!.firstName : 'Driver',
+        'lastName': _currentUser!.lastName.isNotEmpty ? _currentUser!.lastName : 'User',
       });
       // Complete business step
       await _api.patch('/auth/onboarding/business', body: {});

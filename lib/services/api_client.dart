@@ -126,6 +126,16 @@ class ApiClient {
       return parsed;
     }
 
+    if (resp.statusCode == 403) {
+      if (parsed is Map<String, dynamic> && parsed['error']?['code'] == 'ONBOARDING_REQUIRED') {
+        throw ApiException(
+          message: 'Please complete your business profile onboarding to access this feature.',
+          statusCode: 403,
+          code: 'ONBOARDING_REQUIRED',
+        );
+      }
+    }
+
     throw ApiException(
       message: 'Server error (${resp.statusCode})',
       statusCode: resp.statusCode,
