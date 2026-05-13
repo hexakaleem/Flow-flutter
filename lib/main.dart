@@ -21,6 +21,7 @@ import 'models/shipment.dart';
 import 'theme/app_theme.dart';
 import 'services/auth_service.dart';
 import 'services/token_service.dart';
+import 'services/socket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,11 @@ void main() async {
   await TokenService().load();
   // Restore persisted session (if any) before the widget tree is built.
   final bool loggedIn = await AuthService.tryAutoLogin();
+  
+  if (loggedIn) {
+    SocketService().init();
+  }
+
   // Load persisted notifications.
   await NotificationService().load();
   runApp(FlowApp(startLoggedIn: loggedIn));

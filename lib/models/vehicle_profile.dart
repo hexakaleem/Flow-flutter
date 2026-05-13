@@ -19,6 +19,7 @@ class VehicleProfile {
   final String? insuranceDocumentPath;
   final bool hasLiftgate;
   final bool isHazmatCertified;
+  final String status;
 
   const VehicleProfile({
     required this.equipmentType,
@@ -41,6 +42,7 @@ class VehicleProfile {
     this.insuranceDocumentPath,
     this.hasLiftgate = false,
     this.isHazmatCertified = false,
+    this.status = 'available',
   });
 
   Map<String, dynamic> toJson() {

@@ -60,7 +60,7 @@ class LoadService {
 
   /// Book a load by creating a booking request.
   /// The backend requires truckId in the body.
-  Future<bool> bookLoad(String loadId) async {
+  Future<bool> bookLoad(String loadId, {double? proposedRate}) async {
     try {
       final truckId = _auth.truckId;
       if (truckId == null || truckId.isEmpty) {
@@ -73,10 +73,16 @@ class LoadService {
 
       final userId = _auth.currentUser?.id ?? '';
 
-      await _api.post('/loads/$loadId/booking-request', body: {
+      final body = <String, dynamic>{
         'truckId': truckId,
         'driverId': userId,
-      });
+      };
+
+      if (proposedRate != null) {
+        body['proposedRate'] = proposedRate.toString();
+      }
+
+      await _api.post('/loads/$loadId/booking-request', body: body);
       return true;
     } on ApiException {
       rethrow;

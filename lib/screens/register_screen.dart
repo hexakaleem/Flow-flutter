@@ -100,8 +100,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 20),
                     // First Name
-                    Text('First Name',
-                        style: GoogleFonts.poppins(color: Colors.white70)),
+                    RichText(
+                      text: TextSpan(
+                        text: 'First Name',
+                        style: GoogleFonts.poppins(color: Colors.white70),
+                        children: const [
+                          TextSpan(
+                            text: ' *',
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _firstNameController,
@@ -140,8 +150,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 14),
                     // Email
-                    Text('Email',
-                        style: GoogleFonts.poppins(color: Colors.white70)),
+                    RichText(
+                      text: TextSpan(
+                        text: 'Email',
+                        style: GoogleFonts.poppins(color: Colors.white70),
+                        children: const [
+                          TextSpan(
+                            text: ' *',
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _emailController,
@@ -161,8 +181,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 14),
                     // Password
-                    Text('Password',
-                        style: GoogleFonts.poppins(color: Colors.white70)),
+                    RichText(
+                      text: TextSpan(
+                        text: 'Password',
+                        style: GoogleFonts.poppins(color: Colors.white70),
+                        children: const [
+                          TextSpan(
+                            text: ' *',
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _passwordController,
@@ -182,8 +212,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                     const SizedBox(height: 14),
                     // Confirm Password
-                    Text('Confirm Password',
-                        style: GoogleFonts.poppins(color: Colors.white70)),
+                    RichText(
+                      text: TextSpan(
+                        text: 'Confirm Password',
+                        style: GoogleFonts.poppins(color: Colors.white70),
+                        children: const [
+                          TextSpan(
+                            text: ' *',
+                            style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _confirmPasswordController,

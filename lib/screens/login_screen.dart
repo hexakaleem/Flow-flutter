@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
 import '../services/api_client.dart';
 import '../services/notification_service.dart';
+import '../services/socket_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -226,6 +227,10 @@ class _LoginScreenState extends State<LoginScreen> {
           final username = _authService.currentUser?.username ?? 'Driver';
           await notifSvc.notifyAccountCreated(username);
         }
+        
+        // Initialize real-time connection
+        SocketService().init();
+
         if (mounted) Navigator.pushReplacementNamed(context, '/home');
       } else {
         setState(() {

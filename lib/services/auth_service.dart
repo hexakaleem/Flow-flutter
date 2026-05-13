@@ -238,7 +238,7 @@ class AuthService {
         final trucks = data['trucks'] as List?;
         if (trucks != null && trucks.isNotEmpty) {
           final truck = trucks[0] as Map<String, dynamic>;
-          _truckId = truck['_id']?.toString() ?? '';
+          _truckId = (truck['_id'] ?? truck['id'])?.toString() ?? '';
           _vehicleProfile = _truckToVehicleProfile(truck);
           return;
         }
@@ -293,8 +293,8 @@ class AuthService {
       final body = <String, dynamic>{
         'plateNumber': profile.licensePlate,
         'plateState': profile.state.isNotEmpty ? profile.state : 'N/A',
-        'internalId': profile.internalFleetId.isNotEmpty
-            ? profile.internalFleetId
+        'internalId': profile.internalFleetId.trim().isNotEmpty
+            ? profile.internalFleetId.trim()
             : 'TRK-${DateTime.now().millisecondsSinceEpoch}',
         'type': truckType,
         'vin': profile.vinNumber.isNotEmpty ? profile.vinNumber : null,
@@ -338,7 +338,7 @@ class AuthService {
         // Create new truck
         final result = await _api.post('/fleet/trucks', body: body);
         if (result != null && result is Map<String, dynamic>) {
-          _truckId = result['_id']?.toString() ?? '';
+          _truckId = (result['_id'] ?? result['id'])?.toString() ?? '';
         }
       }
 
@@ -352,7 +352,30 @@ class AuthService {
       debugPrint('Vehicle profile save error: $e');
       return false;
     }
+    Future<bool> deactivateTruck(String truckId, {bool activate = false}) async {
+    try {
+      final newStatus = activate ? 'available' : 'disabled';
+      await _api.patch('/fleet/trucks/$truckId', body: {'status': newStatus});
+      await _loadVehicleProfile();
+      return true;
+    } catch (e) {
+      debugPrint('Truck status update error: $e');
+      return false;
+    }
   }
+
+  Future<bool> removeTruck(String truckId) async {
+    try {
+      await _api.delete('/fleet/trucks/$truckId');
+      _truckId = null;
+      _vehicleProfile = null;
+      return true;
+    } catch (e) {
+      debugPrint('Truck removal error: $e');
+      return false;
+    }
+  }
+}
 
   /// Upload a document file (registration, insurance, etc.) to the backend.
   /// Returns the URL of the uploaded file, or null on failure.
@@ -397,6 +420,7 @@ class AuthService {
       registrationDocumentType: 'PDF',
       insuranceDocumentLabel: truck['insurancePolicy']?.toString() ?? '',
       insuranceDocumentType: 'PDF',
+      status: truck['status']?.toString() ?? 'available',
     );
   }
 

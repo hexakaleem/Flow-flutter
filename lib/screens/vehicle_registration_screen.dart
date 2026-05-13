@@ -86,6 +86,79 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     _showAllFields = true;
   }
 
+
+
+  Future<void> _handleDeactivate() async {
+    final truckId = _auth.truckId;
+    if (truckId == null) return;
+    
+    final currentStatus = _auth.getVehicleProfile(_auth.currentUser!.id)?.status;
+    final isCurrentlyDisabled = currentStatus == 'disabled';
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(isCurrentlyDisabled ? 'Activate Truck?' : 'Deactivate Truck?'),
+        content: Text('Are you sure you want to ${isCurrentlyDisabled ? 'activate' : 'deactivate'} this vehicle?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(isCurrentlyDisabled ? 'Activate' : 'Deactivate')),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+    final success = await _auth.deactivateTruck(truckId, activate: isCurrentlyDisabled);
+    setState(() => _isLoading = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Truck ${isCurrentlyDisabled ? 'activated' : 'deactivated'} successfully')),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update truck status')),
+      );
+    }
+  }
+
+  Future<void> _handleRemove() async {
+    final truckId = _auth.truckId;
+    if (truckId == null) return;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Remove Truck?'),
+        content: const Text('Are you sure you want to PERMANENTLY remove this vehicle? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Remove', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isLoading = true);
+    final success = await _auth.removeTruck(truckId);
+    setState(() => _isLoading = false);
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Truck removed successfully')),
+      );
+      Navigator.pop(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to remove truck')),
+      );
+    }
+  }
+
   Future<void> _lookupVin() async {
     final vin = _vinController.text.trim();
     if (vin.isEmpty) {
@@ -298,7 +371,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       trailerWidth: _trailerWidthController.text.trim(),
       trailerHeight: _trailerHeightController.text.trim(),
       maxWeight: _maxWeightController.text.trim(),
-      internalFleetId: '',
+      internalFleetId: _internalFleetIdController.text.trim(),
       registrationDocumentLabel: _registrationDocumentController.text.trim(),
       registrationDocumentType: _registrationDocumentType,
       insuranceDocumentLabel: _insuranceDocumentController.text.trim(),
@@ -509,6 +582,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     String? hint,
     String? Function(String?)? validator,
     double width = 145,
+    bool isRequired = false,
   }) {
     return SizedBox(
       width: width,
@@ -517,11 +591,22 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
         validator: validator,
         style: const TextStyle(color: Colors.black87, fontSize: 14),
         decoration: InputDecoration(
-          labelText: label,
-          labelStyle: TextStyle(
-            color: Colors.grey.shade500,
-            fontWeight: FontWeight.w600,
-            fontSize: 13,
+          label: RichText(
+            text: TextSpan(
+              text: label,
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+              children: [
+                if (isRequired)
+                  const TextSpan(
+                    text: ' *',
+                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  ),
+              ],
+            ),
           ),
           hintText: hint,
           hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
@@ -861,6 +946,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   child: _buildVehicleField(
                                     'VIN Number',
                                     _vinController,
+                                    isRequired: true,
                                     validator: (value) =>
                                         value == null || value.trim().isEmpty
                                             ? 'Required'
@@ -894,11 +980,21 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                           fontSize: 14,
                                           fontWeight: FontWeight.w400),
                                       decoration: InputDecoration(
-                                        labelText: 'Equipment Type',
-                                        labelStyle: TextStyle(
-                                          color: Colors.grey.shade500,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13,
+                                        label: RichText(
+                                          text: TextSpan(
+                                            text: 'Equipment Type',
+                                            style: TextStyle(
+                                              color: Colors.grey.shade500,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 13,
+                                            ),
+                                            children: const [
+                                              TextSpan(
+                                                text: ' *',
+                                                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                         filled: true,
                                         fillColor: const Color(0xFFF7F6FB),
@@ -965,6 +1061,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   _buildVehicleField(
                                     'License Plate',
                                     _licensePlateController,
+                                    isRequired: true,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) {
                                         return 'Required';
@@ -977,8 +1074,28 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                     },
                                   ),
                                   _buildVehicleField(
+                                    'State',
+                                    _stateController,
+                                    isRequired: true,
+                                    validator: (value) =>
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
+                                  ),
+                                  _buildVehicleField(
+                                    'Internal ID',
+                                    _internalFleetIdController,
+                                    isRequired: true,
+                                    hint: 'e.g. TRK-001',
+                                    validator: (value) =>
+                                        value == null || value.trim().isEmpty
+                                            ? 'Required'
+                                            : null,
+                                  ),
+                                  _buildVehicleField(
                                     'Year',
                                     _yearController,
+                                    isRequired: true,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) {
                                         return 'Required';
@@ -989,6 +1106,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   _buildVehicleField(
                                     'Make',
                                     _makeController,
+                                    isRequired: true,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) {
                                         return 'Required';
@@ -999,6 +1117,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   _buildVehicleField(
                                     'Model',
                                     _modelController,
+                                    isRequired: true,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) {
                                         return 'Required';
@@ -1009,6 +1128,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                   _buildVehicleField(
                                     'Max Weight (lbs)',
                                     _maxWeightController,
+                                    isRequired: true,
                                     validator: (value) {
                                       if (value == null || value.trim().isEmpty) {
                                         return 'Required';
@@ -1183,6 +1303,50 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                 ),
                               ],
                             ),
+                              if (widget.isEditing) ...[
+                                const SizedBox(height: 32),
+                                const Divider(),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Danger Zone',
+                                  style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.red),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: _isLoading ? null : _handleDeactivate,
+                                        icon: const Icon(Icons.block, size: 18),
+                                        label: Text(_auth.getVehicleProfile(_auth.currentUser!.id)?.status == 'disabled' ? 'Activate' : 'Deactivate'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.orange.shade700,
+                                          side: BorderSide(color: Colors.orange.shade200),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        onPressed: _isLoading ? null : _handleRemove,
+                                        icon: const Icon(Icons.delete_forever, size: 18),
+                                        label: const Text('Remove'),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.red,
+                                          side: BorderSide(color: Colors.red.shade200),
+                                          padding: const EdgeInsets.symmetric(vertical: 12),
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
                           ],
                         ),
                       ),

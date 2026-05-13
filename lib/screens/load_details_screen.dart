@@ -109,12 +109,62 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
       return;
     }
 
+    // Parse current rate
+    final initialRate = double.tryParse(_load.rate.replaceAll(RegExp(r'[^0-9.]'), '')) ?? 0.0;
+    final rateController = TextEditingController(text: initialRate.toStringAsFixed(0));
+
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Booking', style: TextStyle(fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Enter your proposed rate for this load:'),
+            const SizedBox(height: 15),
+            TextField(
+              controller: rateController,
+              keyboardType: TextInputType.number,
+              decoration: InputDecoration(
+                prefixText: '$',
+                labelText: 'Proposed Rate',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'A booking request will be sent to the broker for review.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF7A3FF2),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Send Bid'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final bookSuccess = await _loadService.bookLoad(_load.id);
+      final proposedRate = double.tryParse(rateController.text);
+      final bookSuccess = await _loadService.bookLoad(_load.id, proposedRate: proposedRate);
       if (bookSuccess) {
         final addSuccess = await _shipmentService.addShipment(
           loadId: _load.loadNumber,
