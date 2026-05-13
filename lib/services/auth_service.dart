@@ -304,8 +304,8 @@ class AuthService {
         'specs': {
           'maxWeight': int.tryParse(profile.maxWeight.replaceAll(',', '')) ?? 0,
           'length': int.tryParse(profile.trailerLength) ?? 0,
-          'hasLiftgate': false,
-          'isHazmatCertified': false,
+          'hasLiftgate': profile.hasLiftgate,
+          'isHazmatCertified': profile.isHazmatCertified,
         },
       };
 

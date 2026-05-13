@@ -16,6 +16,8 @@ class VehicleProfile {
   final String insuranceDocumentType;
   final String? registrationDocumentPath;
   final String? insuranceDocumentPath;
+  final bool hasLiftgate;
+  final bool isHazmatCertified;
 
   const VehicleProfile({
     required this.equipmentType,
@@ -35,6 +37,8 @@ class VehicleProfile {
     required this.insuranceDocumentType,
     this.registrationDocumentPath,
     this.insuranceDocumentPath,
+    this.hasLiftgate = false,
+    this.isHazmatCertified = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -56,6 +60,8 @@ class VehicleProfile {
       'insuranceDocumentType': insuranceDocumentType,
       'registrationDocumentPath': registrationDocumentPath,
       'insuranceDocumentPath': insuranceDocumentPath,
+      'hasLiftgate': hasLiftgate,
+      'isHazmatCertified': isHazmatCertified,
     };
   }
 
@@ -78,6 +84,8 @@ class VehicleProfile {
       insuranceDocumentType: json['insuranceDocumentType'] ?? '',
       registrationDocumentPath: json['registrationDocumentPath'],
       insuranceDocumentPath: json['insuranceDocumentPath'],
+      hasLiftgate: json['hasLiftgate'] ?? false,
+      isHazmatCertified: json['isHazmatCertified'] ?? false,
     );
   }
 }

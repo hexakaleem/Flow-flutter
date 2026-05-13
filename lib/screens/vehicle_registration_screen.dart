@@ -49,6 +49,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
   bool _isLoading = false;
   bool _isLoadingVin = false;
   bool _showAllFields = false;
+  bool _hasLiftgate = false;
+  bool _isHazmatCertified = false;
 
   @override
   void initState() {
@@ -300,6 +302,8 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       insuranceDocumentType: _insuranceDocumentType,
       registrationDocumentPath: registrationPath,
       insuranceDocumentPath: insurancePath,
+      hasLiftgate: _hasLiftgate,
+      isHazmatCertified: _isHazmatCertified,
     );
 
     try {
@@ -531,6 +535,47 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF8E5AF7), width: 1.5),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleChip({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: value
+              ? const Color(0xFF8E5AF7).withOpacity(0.12)
+              : const Color(0xFFF7F6FB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: value ? const Color(0xFF8E5AF7) : Colors.grey.shade200,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              value ? Icons.check_box : Icons.check_box_outline_blank,
+              color: value ? const Color(0xFF7A3FF2) : Colors.grey,
+              size: 18,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: value ? const Color(0xFF7A3FF2) : Colors.black54,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -962,6 +1007,28 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
                                         value == null || value.trim().isEmpty
                                             ? 'Required'
                                             : null,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _buildToggleChip(
+                                      label: 'Liftgate',
+                                      value: _hasLiftgate,
+                                      onChanged: (v) =>
+                                          setState(() => _hasLiftgate = v),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: _buildToggleChip(
+                                      label: 'Hazmat Certified',
+                                      value: _isHazmatCertified,
+                                      onChanged: (v) => setState(
+                                          () => _isHazmatCertified = v),
+                                    ),
                                   ),
                                 ],
                               ),

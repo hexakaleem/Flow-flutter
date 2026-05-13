@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -5,6 +6,7 @@ import 'package:http/http.dart' as http;
 import '../services/auth_service.dart';
 import '../services/shipment_service.dart';
 import '../services/notification_service.dart';
+import '../services/api_client.dart';
 import '../models/shipment.dart';
 import '../models/vehicle_profile.dart';
 import '../widgets/custom_bottom_nav.dart';
@@ -29,12 +31,26 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showCongrats = false;
   bool _isOnDuty = false;
   String _locationText = 'Fetching location...';
+  Timer? _locationTimer;
 
   @override
   void initState() {
     super.initState();
     _loadHomeData();
     _fetchLocation();
+    _startPeriodicLocationUpdates();
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPeriodicLocationUpdates() {
+    _locationTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+      _fetchAndSendLocation();
+    });
   }
 
   Future<void> _loadHomeData() async {
@@ -52,6 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchLocation() async {
+    await _fetchAndSendLocation();
+  }
+
+  Future<void> _fetchAndSendLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -73,6 +93,24 @@ class _HomeScreenState extends State<HomeScreen> {
       final pos = await Geolocator.getCurrentPosition(
           locationSettings:
               const LocationSettings(accuracy: LocationAccuracy.medium));
+      final lat = pos.latitude;
+      final lng = pos.longitude;
+
+      // ── Send location to backend if truck is registered ─────────────────
+      final truckId = _auth.truckId;
+      if (truckId != null && truckId.isNotEmpty) {
+        try {
+          final api = ApiClient();
+          await api.post('/fleet/trucks/$truckId/location', body: {
+            'lat': lat,
+            'lng': lng,
+          });
+        } catch (_) {
+          // Non-critical — GPS tracking is best-effort
+        }
+      }
+
+      // ── Reverse geocode for display ─────────────────────────────────────
       final url = Uri.parse(
           'https://nominatim.openstreetmap.org/reverse'
           '?lat=${pos.latitude}&lon=${pos.longitude}&format=json');
