@@ -8,6 +8,7 @@ class VehicleProfile {
   final String model;
   final String trailerLength;
   final String trailerWidth;
+  final String trailerHeight;
   final String maxWeight;
   final String internalFleetId;
   final String registrationDocumentLabel;
@@ -16,6 +17,8 @@ class VehicleProfile {
   final String insuranceDocumentType;
   final String? registrationDocumentPath;
   final String? insuranceDocumentPath;
+  final bool hasLiftgate;
+  final bool isHazmatCertified;
 
   const VehicleProfile({
     required this.equipmentType,
@@ -27,6 +30,7 @@ class VehicleProfile {
     required this.model,
     required this.trailerLength,
     required this.trailerWidth,
+    required this.trailerHeight,
     required this.maxWeight,
     required this.internalFleetId,
     required this.registrationDocumentLabel,
@@ -35,6 +39,8 @@ class VehicleProfile {
     required this.insuranceDocumentType,
     this.registrationDocumentPath,
     this.insuranceDocumentPath,
+    this.hasLiftgate = false,
+    this.isHazmatCertified = false,
   });
 
   Map<String, dynamic> toJson() {
@@ -48,6 +54,7 @@ class VehicleProfile {
       'model': model,
       'trailerLength': trailerLength,
       'trailerWidth': trailerWidth,
+      'trailerHeight': trailerHeight,
       'maxWeight': maxWeight,
       'internalFleetId': internalFleetId,
       'registrationDocumentLabel': registrationDocumentLabel,
@@ -56,6 +63,8 @@ class VehicleProfile {
       'insuranceDocumentType': insuranceDocumentType,
       'registrationDocumentPath': registrationDocumentPath,
       'insuranceDocumentPath': insuranceDocumentPath,
+      'hasLiftgate': hasLiftgate,
+      'isHazmatCertified': isHazmatCertified,
     };
   }
 
@@ -70,6 +79,7 @@ class VehicleProfile {
       model: json['model'] ?? '',
       trailerLength: json['trailerLength'] ?? '',
       trailerWidth: json['trailerWidth'] ?? '',
+      trailerHeight: json['trailerHeight'] ?? '',
       maxWeight: json['maxWeight'] ?? '',
       internalFleetId: json['internalFleetId'] ?? '',
       registrationDocumentLabel: json['registrationDocumentLabel'] ?? '',
@@ -78,6 +88,8 @@ class VehicleProfile {
       insuranceDocumentType: json['insuranceDocumentType'] ?? '',
       registrationDocumentPath: json['registrationDocumentPath'],
       insuranceDocumentPath: json['insuranceDocumentPath'],
+      hasLiftgate: json['hasLiftgate'] ?? false,
+      isHazmatCertified: json['isHazmatCertified'] ?? false,
     );
   }
 }

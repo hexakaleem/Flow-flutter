@@ -63,8 +63,10 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
   Future<void> _buildRoute() async {
     final originStr = '${_load.origin}, ${_load.originState}';
     final destStr = '${_load.destination}, ${_load.destinationState}';
-    final o = await _geocode(originStr);
-    final d = await _geocode(destStr);
+    LatLng? o = await _geocode(originStr);
+    LatLng? d = await _geocode(destStr);
+    o ??= await _geocode(_load.origin);
+    d ??= await _geocode(_load.destination);
     if (o == null || d == null) {
       setState(() => _mapLoading = false);
       return;
@@ -94,7 +96,7 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
   Future<void> _bookLoad() async {
     final user = _auth.currentUser;
     final hasVehicleProfile =
-        user != null && _auth.hasVehicleProfile(user.mcNumber);
+        user != null && _auth.hasVehicleProfile(user.id);
 
     if (!hasVehicleProfile) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -447,7 +449,9 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
         currentIndex: 2, // load details usually opened from load board
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushNamed(context, '/order_history');
           if (index == 2) Navigator.pop(context);
+          if (index == 3) Navigator.pushNamed(context, '/stats');
         },
       ),
     );

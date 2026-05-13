@@ -4,6 +4,7 @@ enum NotificationType {
   loadBooked,
   fuelLogged,
   profileUpdated,
+  deliveryCompleted,
   generic,
 }
 
@@ -31,6 +32,7 @@ class AppNotification {
         NotificationType.loadBooked: (icon: '📦', color: '00BCD4'),
         NotificationType.fuelLogged: (icon: '⛽', color: 'FF9800'),
         NotificationType.profileUpdated: (icon: '✏️', color: '2196F3'),
+        NotificationType.deliveryCompleted: (icon: '✅', color: '4CAF50'),
         NotificationType.generic: (icon: '🔔', color: '9E9E9E'),
       };
 

@@ -1,43 +1,60 @@
 class User {
-  final String username;
-  final String mcNumber;
-  final String password;
+  final String id;
   final String email;
-  final String phoneNumber;
-  final String truckNumber;
+  final String role;
+  final String firstName;
+  final String lastName;
+  final String phone;
   final String companyName;
+  final bool isOnboardingComplete;
+  final bool identityVerified;
+
+  // Legacy convenience getters
+  String get username => '$firstName $lastName'.trim().isEmpty
+      ? email.split('@').first
+      : '$firstName $lastName'.trim();
+  String get mcNumber => id; // backward compat for existing code
+  String get phoneNumber => phone;
+  String get truckNumber => '';
+  String get password => ''; // never stored locally
 
   User({
-    required this.username,
-    required this.mcNumber,
-    required this.password,
+    required this.id,
     required this.email,
-    required this.phoneNumber,
-    required this.truckNumber,
-    required this.companyName,
+    required this.role,
+    required this.firstName,
+    required this.lastName,
+    this.phone = '',
+    this.companyName = '',
+    this.isOnboardingComplete = false,
+    this.identityVerified = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      username: json['username'],
-      mcNumber: json['mcNumber'],
-      password: json['password'],
-      email: json['email'],
-      phoneNumber: json['phoneNumber'],
-      truckNumber: json['truckNumber'],
-      companyName: json['companyName'],
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      email: json['email'] ?? '',
+      role: json['role'] ?? 'independent_driver',
+      firstName: json['firstName'] ?? '',
+      lastName: json['lastName'] ?? '',
+      phone: json['phone'] ?? '',
+      companyName: json['companyName'] ?? '',
+      isOnboardingComplete: json['isOnboardingComplete'] == true,
+      identityVerified: json['identityVerified'] == true,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'username': username,
-      'mcNumber': mcNumber,
-      'password': password,
+      'id': id,
       'email': email,
-      'phoneNumber': phoneNumber,
-      'truckNumber': truckNumber,
+      'role': role,
+      'firstName': firstName,
+      'lastName': lastName,
+      'phone': phone,
       'companyName': companyName,
+      'isOnboardingComplete': isOnboardingComplete,
+      'identityVerified': identityVerified,
     };
   }
 }

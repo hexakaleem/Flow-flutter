@@ -110,7 +110,10 @@ class StatsScreen extends StatelessWidget {
       extendBody: true,
       bottomNavigationBar: CustomBottomNav(
         currentIndex: 3,
-        onTap: (_) {},
+        onTap: (index) {
+          if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushNamed(context, '/order_history');
+        },
       ),
     );
   }

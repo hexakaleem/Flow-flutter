@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../services/auth_service.dart';
+import '../services/api_client.dart';
 import '../services/notification_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -12,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final TextEditingController _mcController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
   bool _isLoading = false;
@@ -88,14 +89,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 30),
-                    Text('MC number',
+                    Text('Email',
                         style: GoogleFonts.poppins(color: Colors.white70)),
                     const SizedBox(height: 8),
                     TextField(
-                      controller: _mcController,
+                      controller: _emailController,
                       enabled: !_isLoading,
+                      keyboardType: TextInputType.emailAddress,
                       decoration: InputDecoration(
-                        hintText: 'Enter mc number...',
+                        hintText: 'Enter email address...',
                         hintStyle: const TextStyle(color: Colors.white24),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.06),
@@ -143,22 +145,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     if (_errorMessage.isNotEmpty) const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.teal.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.teal.withOpacity(0.5)),
-                      ),
-                      child: Text(
-                        'Demo: MC123456 / password123',
-                        style: GoogleFonts.poppins(
-                          color: Colors.teal,
-                          fontSize: 11,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: _isLoading ? null : _handleLogin,
                       style: ElevatedButton.styleFrom(
@@ -218,31 +204,43 @@ class _LoginScreenState extends State<LoginScreen> {
       _isLoading = true;
     });
 
-    final mcNumber = _mcController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
-    if (mcNumber.isEmpty || password.isEmpty) {
+    if (email.isEmpty || password.isEmpty) {
       setState(() {
-        _errorMessage = 'Please enter both MC number and password';
+        _errorMessage = 'Please enter both email and password';
         _isLoading = false;
       });
       return;
     }
 
-    final success =
-        await _authService.login(mcNumber: mcNumber, password: password);
-    if (success) {
-      // Fire account-created notification only on first ever login
-      final notifSvc = NotificationService();
-      await notifSvc.load();
-      if (notifSvc.notifications.isEmpty) {
-        final username = _authService.currentUser?.username ?? 'Driver';
-        await notifSvc.notifyAccountCreated(username);
+    try {
+      final success =
+          await _authService.login(email: email, password: password);
+      if (success) {
+        // Fire account-created notification only on first ever login
+        final notifSvc = NotificationService();
+        await notifSvc.load();
+        if (notifSvc.notifications.isEmpty) {
+          final username = _authService.currentUser?.username ?? 'Driver';
+          await notifSvc.notifyAccountCreated(username);
+        }
+        if (mounted) Navigator.pushReplacementNamed(context, '/home');
+      } else {
+        setState(() {
+          _errorMessage = 'Invalid credentials';
+          _isLoading = false;
+        });
       }
-      if (mounted) Navigator.pushReplacementNamed(context, '/home');
-    } else {
+    } on ApiException catch (e) {
       setState(() {
-        _errorMessage = 'Invalid credentials';
+        _errorMessage = e.message;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Connection error. Please try again.';
         _isLoading = false;
       });
     }
@@ -250,7 +248,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    _mcController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }

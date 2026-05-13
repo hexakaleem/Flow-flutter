@@ -180,6 +180,16 @@ class _LoadBoardScreenState extends State<LoadBoardScreen> {
                               0;
                           return rateB.compareTo(rateA);
                         });
+                      } else if (_selectedFilter == 'Flatbed') {
+                        filteredLoads = filteredLoads.where((l) {
+                          return l.status.toLowerCase().contains('flatbed') ||
+                              l.requirements.any(
+                                  (r) => r.toLowerCase().contains('flatbed'));
+                        }).toList();
+                      } else if (_selectedFilter == 'Nearby') {
+                        filteredLoads = filteredLoads
+                            .where((l) => l.distance.toLowerCase().contains('km'))
+                            .toList();
                       }
 
                       if (filteredLoads.isEmpty) {
@@ -215,6 +225,8 @@ class _LoadBoardScreenState extends State<LoadBoardScreen> {
         currentIndex: 2,
         onTap: (index) {
           if (index == 0) Navigator.pushReplacementNamed(context, '/home');
+          if (index == 1) Navigator.pushNamed(context, '/order_history');
+          if (index == 3) Navigator.pushNamed(context, '/stats');
         },
       ),
     );
@@ -376,8 +388,9 @@ class _LoadBoardScreenState extends State<LoadBoardScreen> {
             spacing: 8,
             runSpacing: 8,
             children: [
-              _buildInfoPill('Flatbed', Colors.teal.shade50, Colors.teal),
-              _buildInfoPill('Full TL', Colors.blue.shade50, Colors.blue),
+              _buildInfoPill(load.status, Colors.teal.shade50, Colors.teal),
+              ...load.requirements
+                  .map((req) => _buildInfoPill(req, Colors.blue.shade50, Colors.blue)),
               _buildInfoPill(load.weight, Colors.grey.shade100, Colors.black87),
               _buildInfoPill(
                   load.commodity, Colors.orange.shade50, Colors.orange),

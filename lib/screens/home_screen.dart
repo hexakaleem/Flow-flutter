@@ -1,16 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
-import 'package:latlong2/latlong.dart';
 import '../services/auth_service.dart';
 import '../services/shipment_service.dart';
 import '../services/notification_service.dart';
+import '../services/api_client.dart';
 import '../models/shipment.dart';
 import '../models/vehicle_profile.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'shipment_detail_screen.dart';
-import 'navigation_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -31,12 +31,26 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _showCongrats = false;
   bool _isOnDuty = false;
   String _locationText = 'Fetching location...';
+  Timer? _locationTimer;
 
   @override
   void initState() {
     super.initState();
     _loadHomeData();
     _fetchLocation();
+    _startPeriodicLocationUpdates();
+  }
+
+  @override
+  void dispose() {
+    _locationTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPeriodicLocationUpdates() {
+    _locationTimer = Timer.periodic(const Duration(seconds: 45), (_) {
+      _fetchAndSendLocation();
+    });
   }
 
   Future<void> _loadHomeData() async {
@@ -44,7 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final list = await _shipmentService.getCurrentUserShipments();
     final user = _auth.currentUser;
     final vehicleProfile =
-        user == null ? null : _auth.getVehicleProfile(user.mcNumber);
+        user == null ? null : _auth.getVehicleProfile(user.id);
     if (!mounted) return;
     setState(() {
       _shipments = list;
@@ -54,6 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _fetchLocation() async {
+    await _fetchAndSendLocation();
+  }
+
+  Future<void> _fetchAndSendLocation() async {
     try {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
@@ -75,6 +93,24 @@ class _HomeScreenState extends State<HomeScreen> {
       final pos = await Geolocator.getCurrentPosition(
           locationSettings:
               const LocationSettings(accuracy: LocationAccuracy.medium));
+      final lat = pos.latitude;
+      final lng = pos.longitude;
+
+      // ── Send location to backend if truck is registered ─────────────────
+      final truckId = _auth.truckId;
+      if (truckId != null && truckId.isNotEmpty) {
+        try {
+          final api = ApiClient();
+          await api.post('/fleet/trucks/$truckId/location', body: {
+            'lat': lat,
+            'lng': lng,
+          });
+        } catch (_) {
+          // Non-critical — GPS tracking is best-effort
+        }
+      }
+
+      // ── Reverse geocode for display ─────────────────────────────────────
       final url = Uri.parse(
           'https://nominatim.openstreetmap.org/reverse'
           '?lat=${pos.latitude}&lon=${pos.longitude}&format=json');
@@ -138,8 +174,444 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadHomeData();
   }
 
+  void _showEditVehicleSheet() {
+    final profile = _vehicleProfile!;
+    final formKey = GlobalKey<FormState>();
+
+    final licensePlateController =
+        TextEditingController(text: profile.licensePlate);
+    final yearController = TextEditingController(text: profile.year);
+    final makeController = TextEditingController(text: profile.make);
+    final modelController = TextEditingController(text: profile.model);
+    final maxWeightController =
+        TextEditingController(text: profile.maxWeight);
+    final trailerLengthController =
+        TextEditingController(text: profile.trailerLength);
+    final trailerWidthController =
+        TextEditingController(text: profile.trailerWidth);
+    final trailerHeightController =
+        TextEditingController(text: profile.trailerHeight);
+
+    String equipmentType = profile.equipmentType;
+    bool hasLiftgate = profile.hasLiftgate;
+    bool isHazmatCertified = profile.isHazmatCertified;
+    bool isSaving = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            height: MediaQuery.of(context).size.height * 0.85,
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8F9FA),
+              borderRadius:
+                  BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding:
+                      const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8E5AF7)
+                              .withOpacity(0.12),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit_outlined,
+                            color: Color(0xFF7A3FF2)),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'Edit Vehicle',
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                        20, 16, 20, 20),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        children: [
+                          DropdownButtonFormField<String>(
+                            isExpanded: true,
+                            value: equipmentType.isNotEmpty
+                                ? equipmentType
+                                : null,
+                            hint: const Text('Not Selected',
+                                style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14)),
+                            dropdownColor: Colors.white,
+                            style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 14),
+                            decoration: InputDecoration(
+                              labelText: 'Equipment Type',
+                              labelStyle: TextStyle(
+                                  color: Colors.grey.shade500,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13),
+                              filled: true,
+                              fillColor:
+                                  const Color(0xFFF7F6FB),
+                              border: OutlineInputBorder(
+                                  borderRadius:
+                                      BorderRadius.circular(
+                                          12),
+                                  borderSide: BorderSide(
+                                      color:
+                                          Colors.grey.shade200)),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                  value: 'Flatbed',
+                                  child: Text('Flatbed',
+                                      style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14))),
+                              DropdownMenuItem(
+                                  value: 'Dry Van',
+                                  child: Text('Dry Van',
+                                      style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14))),
+                              DropdownMenuItem(
+                                  value: 'Reefer',
+                                  child: Text('Reefer',
+                                      style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14))),
+                              DropdownMenuItem(
+                                  value: 'Step Deck',
+                                  child: Text('Step Deck',
+                                      style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14))),
+                              DropdownMenuItem(
+                                  value: 'Other',
+                                  child: Text('Other',
+                                      style: TextStyle(
+                                          color: Colors.black87,
+                                          fontSize: 14))),
+                            ],
+                            validator: (value) =>
+                                (value == null || value.isEmpty)
+                                    ? 'Required'
+                                    : null,
+                            onChanged: (v) =>
+                                equipmentType = v!,
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: _buildEditField(
+                                    'License Plate',
+                                    licensePlateController,
+                                    validator: (v) =>
+                                        (v == null ||
+                                                v.trim().isEmpty)
+                                            ? 'Required'
+                                            : RegExp(r'^[a-zA-Z0-9]+$')
+                                                    .hasMatch(v
+                                                        .trim())
+                                                ? null
+                                                : 'Alphanumeric only'),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: _buildEditField(
+                                    'Year',
+                                    yearController,
+                                    validator: (v) =>
+                                        (v == null ||
+                                                v.trim().isEmpty)
+                                            ? 'Required'
+                                            : null),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildEditField(
+                                    'Make',
+                                    makeController,
+                                    validator: (v) =>
+                                        (v == null ||
+                                                v.trim().isEmpty)
+                                            ? 'Required'
+                                            : null),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildEditField(
+                                    'Model',
+                                    modelController,
+                                    validator: (v) =>
+                                        (v == null ||
+                                                v.trim().isEmpty)
+                                            ? 'Required'
+                                            : null),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _buildEditField('Max Weight (lbs)',
+                              maxWeightController,
+                              validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
+                            }
+                            if (!RegExp(r'^\d{1,7}$')
+                                .hasMatch(v.trim())) {
+                              return 'Max 7 digits';
+                            }
+                            return null;
+                          }),
+                          const SizedBox(height: 14),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildEditField(
+                                    'Trailer Length (ft)',
+                                    trailerLengthController),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildEditField(
+                                    'Trailer Width (ft)',
+                                    trailerWidthController,
+                                    validator: (v) {
+                                  if (v == null ||
+                                      v.trim().isEmpty) {
+                                    return 'Required';
+                                  }
+                                  if (!RegExp(r'^\d{1,3}$')
+                                      .hasMatch(v.trim())) {
+                                    return 'Max 3 digits';
+                                  }
+                                  return null;
+                                }),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          _buildEditField(
+                              'Trailer Height (ft)',
+                              trailerHeightController,
+                              validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Required';
+                            }
+                            if (!RegExp(r'^\d{1,3}$')
+                                .hasMatch(v.trim())) {
+                              return 'Max 3 digits';
+                            }
+                            return null;
+                          }),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildEditToggle(
+                                    'Liftgate', hasLiftgate,
+                                    (v) => setSheetState(() =>
+                                        hasLiftgate = v)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildEditToggle(
+                                    'Hazmat Certified',
+                                    isHazmatCertified, (v) =>
+                                    setSheetState(() =>
+                                        isHazmatCertified = v)),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed: isSaving
+                                  ? null
+                                  : () async {
+                                      if (!(formKey
+                                              .currentState
+                                              ?.validate() ??
+                                          false)) return;
+                                      setSheetState(
+                                          () => isSaving = true);
+                                      final updatedProfile =
+                                          VehicleProfile(
+                                        equipmentType:
+                                            equipmentType,
+                                        licensePlate:
+                                            licensePlateController
+                                                .text
+                                                .trim(),
+                                        state: profile.state,
+                                        vinNumber:
+                                            profile.vinNumber,
+                                        year: yearController.text
+                                            .trim(),
+                                        make: makeController.text
+                                            .trim(),
+                                        model: modelController
+                                            .text
+                                            .trim(),
+                                        trailerLength:
+                                            trailerLengthController
+                                                .text
+                                                .trim(),
+                                        trailerWidth:
+                                            trailerWidthController
+                                                .text
+                                                .trim(),
+                                        trailerHeight:
+                                            trailerHeightController
+                                                .text
+                                                .trim(),
+                                        maxWeight:
+                                            maxWeightController
+                                                .text
+                                                .trim(),
+                                        internalFleetId: profile
+                                            .internalFleetId,
+                                        registrationDocumentLabel:
+                                            profile
+                                                .registrationDocumentLabel,
+                                        registrationDocumentType:
+                                            profile
+                                                .registrationDocumentType,
+                                        insuranceDocumentLabel:
+                                            profile
+                                                .insuranceDocumentLabel,
+                                        insuranceDocumentType:
+                                            profile
+                                                .insuranceDocumentType,
+                                        registrationDocumentPath:
+                                            profile
+                                                .registrationDocumentPath,
+                                        insuranceDocumentPath:
+                                            profile
+                                                .insuranceDocumentPath,
+                                        hasLiftgate: hasLiftgate,
+                                        isHazmatCertified:
+                                            isHazmatCertified,
+                                      );
+                                      final user =
+                                          _auth.currentUser;
+                                      if (user == null) return;
+                                      final saved = await _auth
+                                          .saveVehicleProfile(
+                                              userId: user.id,
+                                              profile:
+                                                  updatedProfile);
+                                      if (!mounted) return;
+                                      if (saved) {
+                                        Navigator.pop(ctx);
+                                        await _loadHomeData();
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(
+                                                  context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Vehicle updated!'),
+                                              backgroundColor:
+                                                  Colors.teal,
+                                            ),
+                                          );
+                                        }
+                                      } else {
+                                        setSheetState(() =>
+                                            isSaving = false);
+                                        ScaffoldMessenger.of(
+                                                context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Failed to save.'),
+                                            backgroundColor:
+                                                Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color(0xFF8E5AF7),
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(
+                                            14)),
+                              ),
+                              child: isSaving
+                                  ? const SizedBox(
+                                      width: 22,
+                                      height: 22,
+                                      child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2),
+                                    )
+                                  : const Text('Save Changes',
+                                      style: TextStyle(
+                                          fontWeight:
+                                              FontWeight.w700,
+                                          fontSize: 16)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   void _onNavTap(int index) {
-    if (index == 2) {
+    if (index == 1) {
+      Navigator.pushNamed(context, '/order_history');
+    } else if (index == 2) {
       _openLoadBoard();
     } else if (index == 3) {
       Navigator.pushNamed(context, '/stats');
@@ -371,6 +843,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
+                    const Text(
+                      'Quick Actions',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     // ── Quick-action tiles (always visible) ──────────────────
                     Row(
                       children: [
@@ -382,7 +863,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildActionCard(
-                                Icons.task_alt_rounded, 'Tasks')),
+                                Icons.task_alt_rounded, 'Tasks',
+                                onTap: () =>
+                                    Navigator.pushNamed(context, '/tasks'))),
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildActionCard(
@@ -398,7 +881,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       'Current Shipment',
                       style: TextStyle(
                         color: Colors.black,
-                        fontSize: 18,
+                        fontSize: 13,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -438,6 +921,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     if (!_loading && _shipments.isNotEmpty)
                       _buildShipmentCard(_shipments.first),
                     const SizedBox(height: 20),
+                    const Text(
+                      'Vehicle Info',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     if (!_loading && _vehicleProfile == null)
                       _buildProfileProgressCard(),
                     if (!_loading && _vehicleProfile != null)
@@ -704,7 +1196,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               TextButton(
-                onPressed: _navigateToVehicleRegistration,
+                onPressed: _showEditVehicleSheet,
                 child: const Text('Edit'),
               ),
             ],
@@ -752,7 +1244,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                     child: _buildVehicleSummaryChip(
                         'Trailer',
-                        '${profile.trailerLength} ft x ${profile.trailerWidth} ft'),
+                        '${profile.trailerLength} x ${profile.trailerWidth} x ${profile.trailerHeight} ft'),
                   ),
                 ],
               ),
@@ -837,49 +1329,82 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<LatLng?> _geocode(String place) async {
-    final uri = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?q=${Uri.encodeQueryComponent(place)}&format=json&limit=1');
-    final resp = await http.get(uri, headers: {'User-Agent': 'FlowApp/1.0'});
-    if (resp.statusCode == 200) {
-      final data = json.decode(resp.body) as List;
-      if (data.isNotEmpty) {
-        return LatLng(
-          double.parse(data[0]['lat']),
-          double.parse(data[0]['lon']),
-        );
-      }
-    }
-    return null;
+  Widget _buildEditField(String label, TextEditingController controller,
+      {String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      validator: validator,
+      style: const TextStyle(color: Colors.black87, fontSize: 14),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(
+            color: Colors.grey.shade500,
+            fontWeight: FontWeight.w600,
+            fontSize: 13),
+        filled: true,
+        fillColor: const Color(0xFFF7F6FB),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide:
+                const BorderSide(color: Color(0xFF8E5AF7), width: 1.5)),
+      ),
+    );
+  }
+
+  Widget _buildEditToggle(
+      String label, bool value, ValueChanged<bool> onChanged) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: value
+              ? const Color(0xFF8E5AF7).withOpacity(0.12)
+              : const Color(0xFFF7F6FB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: value
+                  ? const Color(0xFF8E5AF7)
+                  : Colors.grey.shade200),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+                value
+                    ? Icons.check_box
+                    : Icons.check_box_outline_blank,
+                color: value ? const Color(0xFF7A3FF2) : Colors.grey,
+                size: 18),
+            const SizedBox(width: 8),
+            Text(label,
+                style: TextStyle(
+                    color: value
+                        ? const Color(0xFF7A3FF2)
+                        : Colors.black54,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13)),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _goToMap(Shipment s) async {
-    if (NavigationScreen.savedStartLocation != null) {
-      final origin = await _geocode(s.origin.isNotEmpty ? s.origin : 'Dallas, TX');
-      final destination = await _geocode(s.destination.isNotEmpty ? s.destination : 'Atlanta, GA');
-      if (origin != null && destination != null && mounted) {
-        Navigator.pushNamed(
-          context,
-          '/navigation',
-          arguments: {
-            'shipment': s,
-            'origin': origin,
-            'destination': destination,
-          },
-        ).then((_) => _loadHomeData());
-        return;
-      }
-    }
     if (!mounted) return;
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => ShipmentDetailScreen(
-          shipment: s,
-          autoNavigate: true,
-        ),
+        builder: (_) => ShipmentDetailScreen(shipment: s),
       ),
-    ).then((_) => _loadHomeData());
+    );
+    await _loadHomeData();
   }
 
   Widget _buildShipmentCard(Shipment s) {
@@ -1073,15 +1598,6 @@ class _HomeScreenState extends State<HomeScreen> {
             onTap: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, '/profile');
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.local_shipping, color: Colors.black87),
-            title: const Text('Vehicle Management',
-                style: TextStyle(color: Colors.black87)),
-            onTap: () {
-              Navigator.pop(context);
-              _navigateToVehicleRegistration();
             },
           ),
           const Divider(),
