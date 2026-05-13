@@ -10,41 +10,56 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _auth = AuthService();
-  late TextEditingController _nameController;
+  late TextEditingController _firstNameController;
+  late TextEditingController _lastNameController;
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
-  late TextEditingController _truckController;
   late TextEditingController _companyController;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
     final user = _auth.currentUser;
-    _nameController = TextEditingController(text: user?.username ?? '');
-    _phoneController = TextEditingController(text: user?.phoneNumber ?? '');
+    _firstNameController = TextEditingController(text: user?.firstName ?? '');
+    _lastNameController = TextEditingController(text: user?.lastName ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
-    _truckController = TextEditingController(text: user?.truckNumber ?? '');
     _companyController = TextEditingController(text: user?.companyName ?? '');
   }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _truckController.dispose();
     _companyController.dispose();
     super.dispose();
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
+    setState(() => _isSaving = true);
+
+    final success = await _auth.updateProfile(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      phone: _phoneController.text.trim(),
+      companyName: _companyController.text.trim(),
+    );
+
+    if (!mounted) return;
+    setState(() => _isSaving = false);
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profile updated successfully!'),
-        backgroundColor: Colors.green,
+      SnackBar(
+        content: Text(success
+            ? 'Profile updated successfully!'
+            : 'Failed to update profile.'),
+        backgroundColor: success ? Colors.green : Colors.red,
       ),
     );
-    Navigator.pop(context);
+    if (success) Navigator.pop(context);
   }
 
   @override
@@ -126,7 +141,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 radius: 50,
                                 backgroundColor: const Color(0xFFC07BFE),
                                 child: Text(
-                                  _nameController.text.isNotEmpty ? _nameController.text[0].toUpperCase() : 'D',
+                                  _firstNameController.text.isNotEmpty
+                                      ? _firstNameController.text[0].toUpperCase()
+                                      : 'D',
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -150,51 +167,65 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                         const SizedBox(height: 30),
-                        _buildTextField('Full Name', _nameController, Icons.person),
+                        _buildTextField('First Name', _firstNameController, Icons.person),
                         const SizedBox(height: 15),
-                        _buildTextField('Email Address', _emailController, Icons.email),
+                        _buildTextField('Last Name', _lastNameController, Icons.person_outline),
+                        const SizedBox(height: 15),
+                        _buildTextField('Email Address', _emailController, Icons.email,
+                            enabled: false),
                         const SizedBox(height: 15),
                         _buildTextField('Phone Number', _phoneController, Icons.phone),
                         const SizedBox(height: 15),
                         _buildTextField('Company Name', _companyController, Icons.business),
-                        const SizedBox(height: 15),
-                        _buildTextField('Truck Number', _truckController, Icons.local_shipping),
                         const SizedBox(height: 40),
                         SizedBox(
                           width: double.infinity,
                           height: 55,
                           child: ElevatedButton(
-                            onPressed: _saveProfile,
+                            onPressed: _isSaving ? null : _saveProfile,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.teal,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                              disabledBackgroundColor: Colors.teal.shade300,
                             ),
-                            child: const Text('Save Changes', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                            child: _isSaving
+                                ? const SizedBox(
+                                    height: 24,
+                                    width: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Text('Save Changes',
+                                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                           ),
                         ),
                       ],
                     ),
                   ),
-          ],
-        ),
-      ),
-    ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, IconData icon) {
+  Widget _buildTextField(String label, TextEditingController controller, IconData icon,
+      {bool enabled = true}) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.black87),
+      enabled: enabled,
+      style: TextStyle(color: enabled ? Colors.black87 : Colors.grey),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: Colors.grey),
         prefixIcon: Icon(icon, color: Colors.grey),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: enabled ? Colors.white : Colors.grey.shade100,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,

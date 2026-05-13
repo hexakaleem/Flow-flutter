@@ -61,7 +61,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
   void _loadExistingProfile() {
     final user = _auth.currentUser;
     if (user == null) return;
-    final profile = _auth.getVehicleProfile(user.mcNumber);
+    final profile = _auth.getVehicleProfile(user.id);
     if (profile == null) return;
 
     _licensePlateController.text = profile.licensePlate;
@@ -285,7 +285,7 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
     final profile = VehicleProfile(
       equipmentType: _equipmentType ?? '',
       licensePlate: _licensePlateController.text.trim(),
-      state: '',
+      state: _stateController.text.trim(),
       vinNumber: _vinController.text.trim(),
       year: _yearController.text.trim(),
       make: _makeController.text.trim(),
@@ -302,20 +302,33 @@ class _VehicleRegistrationScreenState extends State<VehicleRegistrationScreen> {
       insuranceDocumentPath: insurancePath,
     );
 
-    final saved =
-        await _auth.saveVehicleProfile(userId: user.mcNumber, profile: profile);
+    try {
+      final saved =
+          await _auth.saveVehicleProfile(userId: user.id, profile: profile);
 
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    if (saved) {
-      // Fire notification
-      await NotificationService().notifyVehicleRegistered();
-      Navigator.pop(context, true);
+      if (saved) {
+        // Fire notification
+        await NotificationService().notifyVehicleRegistered();
+        if (mounted) Navigator.pop(context, true);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Vehicle registration saved successfully!'),
+              backgroundColor: Colors.teal,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vehicle registration saved successfully!'),
-          backgroundColor: Colors.teal,
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
         ),
       );
     }

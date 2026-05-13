@@ -96,7 +96,7 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
   Future<void> _bookLoad() async {
     final user = _auth.currentUser;
     final hasVehicleProfile =
-        user != null && _auth.hasVehicleProfile(user.mcNumber);
+        user != null && _auth.hasVehicleProfile(user.id);
 
     if (!hasVehicleProfile) {
       ScaffoldMessenger.of(context).showSnackBar(

@@ -42,7 +42,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final list = await _shipmentService.getCurrentUserShipments();
     final user = _auth.currentUser;
     final vehicleProfile =
-        user == null ? null : _auth.getVehicleProfile(user.mcNumber);
+        user == null ? null : _auth.getVehicleProfile(user.id);
     if (!mounted) return;
     setState(() {
       _shipments = list;

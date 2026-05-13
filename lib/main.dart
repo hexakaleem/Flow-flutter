@@ -19,9 +19,12 @@ import 'models/load.dart';
 import 'models/shipment.dart';
 import 'theme/app_theme.dart';
 import 'services/auth_service.dart';
+import 'services/token_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Load persisted tokens first so the API client can attach them.
+  await TokenService().load();
   // Restore persisted session (if any) before the widget tree is built.
   final bool loggedIn = await AuthService.tryAutoLogin();
   // Load persisted notifications.

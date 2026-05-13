@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/app_notification.dart';
+import 'api_client.dart';
 
 class NotificationService extends ChangeNotifier {
   static final NotificationService _instance = NotificationService._internal();
@@ -9,6 +10,8 @@ class NotificationService extends ChangeNotifier {
   NotificationService._internal();
 
   static const _kKey = 'app_notifications';
+
+  final ApiClient _api = ApiClient();
 
   List<AppNotification> _notifications = [];
 
@@ -18,9 +21,35 @@ class NotificationService extends ChangeNotifier {
   int get unreadCount => _notifications.where((n) => !n.isRead).length;
   bool get hasUnread => unreadCount > 0;
 
-  // ── Load from prefs ────────────────────────────────────────────────────────
+  // ── Load from server (fallback to local cache) ──────────────────────────────
 
   Future<void> load() async {
+    // Try server first
+    try {
+      final data = await _api.get('/notifications');
+      if (data != null && data is List) {
+        _notifications = data.map((e) {
+          final json = e as Map<String, dynamic>;
+          return AppNotification(
+            id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+            title: json['title']?.toString() ?? '',
+            body: json['message']?.toString() ?? json['body']?.toString() ?? '',
+            type: _parseType(json['type']?.toString()),
+            createdAt: json['createdAt'] != null
+                ? DateTime.tryParse(json['createdAt'].toString()) ?? DateTime.now()
+                : DateTime.now(),
+            isRead: json['isRead'] == true,
+          );
+        }).toList();
+        await _saveLocal();
+        notifyListeners();
+        return;
+      }
+    } catch (e) {
+      debugPrint('Failed to load server notifications: $e');
+    }
+
+    // Fallback to local cache
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_kKey);
     if (raw == null) return;
@@ -32,7 +61,7 @@ class NotificationService extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> _save() async {
+  Future<void> _saveLocal() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(
       _kKey,
@@ -40,7 +69,27 @@ class NotificationService extends ChangeNotifier {
     );
   }
 
-  // ── Add ────────────────────────────────────────────────────────────────────
+  NotificationType _parseType(String? type) {
+    switch (type) {
+      case 'account_created':
+        return NotificationType.accountCreated;
+      case 'vehicle_registered':
+        return NotificationType.vehicleRegistered;
+      case 'load_booked':
+      case 'booking:confirmed':
+        return NotificationType.loadBooked;
+      case 'fuel_logged':
+        return NotificationType.fuelLogged;
+      case 'profile_updated':
+        return NotificationType.profileUpdated;
+      case 'delivery_completed':
+        return NotificationType.deliveryCompleted;
+      default:
+        return NotificationType.generic;
+    }
+  }
+
+  // ── Add (local convenience – also pushed by server via websocket later) ────
 
   Future<void> add({
     required String title,
@@ -61,7 +110,7 @@ class NotificationService extends ChangeNotifier {
       type: type,
       createdAt: now,
     ));
-    await _save();
+    await _saveLocal();
     notifyListeners();
   }
 
@@ -71,23 +120,33 @@ class NotificationService extends ChangeNotifier {
     final idx = _notifications.indexWhere((n) => n.id == id);
     if (idx == -1) return;
     _notifications[idx].isRead = true;
-    await _save();
+    await _saveLocal();
     notifyListeners();
   }
 
   Future<void> markAllRead() async {
+    try {
+      await _api.put('/notifications/mark-all-read');
+    } catch (e) {
+      debugPrint('Failed to mark all read on server: $e');
+    }
     for (final n in _notifications) {
       n.isRead = true;
     }
-    await _save();
+    await _saveLocal();
     notifyListeners();
   }
 
   // ── Delete ─────────────────────────────────────────────────────────────────
 
   Future<void> delete(String id) async {
+    try {
+      await _api.delete('/notifications/$id');
+    } catch (e) {
+      debugPrint('Failed to delete notification on server: $e');
+    }
     _notifications.removeWhere((n) => n.id == id);
-    await _save();
+    await _saveLocal();
     notifyListeners();
   }
 
