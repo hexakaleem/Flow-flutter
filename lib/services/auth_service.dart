@@ -162,11 +162,17 @@ class AuthService {
       await _api.patch('/auth/onboarding/business', body: {});
       // Complete stripe step (skip actual Stripe setup)
       await _api.patch('/auth/onboarding/stripe', body: {});
-      // Complete preferences step
-      await _api.patch('/auth/onboarding/prefs', body: {});
+      // Complete preferences step — returns a new accessToken with updated claims
+      final prefsData = await _api.patch('/auth/onboarding/prefs', body: {});
+      if (prefsData != null && prefsData is Map<String, dynamic>) {
+        final newToken = prefsData['accessToken'] as String?;
+        if (newToken != null && newToken.isNotEmpty) {
+          await _tokens.updateAccessToken(newToken);
+        }
+      }
       debugPrint('Onboarding auto-completed for ${_currentUser!.email}');
 
-      // Refresh the user data + tokens (onboarding now = complete, new token has updated claims)
+      // Refresh the user data (onboarding now complete)
       final meData = await _api.get('/auth/me');
       if (meData != null && meData is Map<String, dynamic>) {
         _currentUser = User.fromJson(meData);
