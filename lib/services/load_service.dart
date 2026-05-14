@@ -152,4 +152,16 @@ class LoadService {
       return [];
     }
   }
+  /// Cancel a booking request or confirmed booking.
+  Future<bool> cancelBooking(String loadId, String bookingId) async {
+    try {
+      await _api.put('/loads/$loadId/bookings/$bookingId/cancel', {});
+      return true;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      debugPrint('Error cancelling booking: $e');
+      return false;
+    }
+  }
 }
