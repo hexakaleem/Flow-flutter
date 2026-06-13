@@ -34,13 +34,11 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
   double? _currentLongitude;
   File? _receiptImage;
   ParsedReceipt? _parsedReceipt;
-
   @override
   void initState() {
     super.initState();
     _loadLogs();
   }
-
   Future<void> _loadLogs() async {
     setState(() => _loading = true);
     final logs = await _fuelService.getFuelLogs();
@@ -51,7 +49,6 @@ class _FuelLogScreenState extends State<FuelLogScreen> {
       });
     }
   }
-
   Future<void> _getCurrentLocation() async {
     setState(() => _gettingLocation = true);
     try {
