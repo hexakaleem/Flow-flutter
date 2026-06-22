@@ -12,9 +12,9 @@ class SupportChatMessage {
 }
 
 class CustomerSupportService {
-  static const String _apiKey ='sk-RbVFELz2efkzovr37SPBqIPUZNIHDSjD9V648Y0cGfUs7R0NK4RAHbXtcvRFzfuJ';
-  static const String _model = 'deepseek-v4-flash';
-  static const String _apiUrl = 'https://opencode.ai/zen/go/v1/chat/completions';
+  static const String _apiKey = 'YOUR_API_KEY_HERE';
+  static const String _model = 'minimax/minimax-m2.5:free';
+  static const String _apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
   Future<String> sendMessage({
     required List<SupportChatMessage> history,

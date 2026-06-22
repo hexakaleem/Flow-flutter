@@ -111,17 +111,18 @@ class _HomeScreenState extends State<HomeScreen> {
       }
 
       // ── Reverse geocode for display ─────────────────────────────────────
-      final url = Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse'
+      final url = Uri.parse('https://nominatim.openstreetmap.org/reverse'
           '?lat=${pos.latitude}&lon=${pos.longitude}&format=json');
-      final res = await http.get(url,
-          headers: {'User-Agent': 'FlowDriverApp/1.0'});
+      final res =
+          await http.get(url, headers: {'User-Agent': 'FlowDriverApp/1.0'});
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body) as Map<String, dynamic>;
         final addr = data['address'] as Map<String, dynamic>? ?? {};
-        final suburb = addr['suburb'] ?? addr['neighbourhood'] ?? addr['village'] ?? '';
+        final suburb =
+            addr['suburb'] ?? addr['neighbourhood'] ?? addr['village'] ?? '';
         final city = addr['city'] ?? addr['town'] ?? addr['county'] ?? '';
-        final parts = [suburb, city].where((s) => (s as String).isNotEmpty).toList();
+        final parts =
+            [suburb, city].where((s) => (s as String).isNotEmpty).toList();
         if (mounted) {
           setState(() => _locationText =
               parts.isNotEmpty ? parts.take(2).join(', ') : 'Location found');
@@ -183,8 +184,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final yearController = TextEditingController(text: profile.year);
     final makeController = TextEditingController(text: profile.make);
     final modelController = TextEditingController(text: profile.model);
-    final maxWeightController =
-        TextEditingController(text: profile.maxWeight);
+    final maxWeightController = TextEditingController(text: profile.maxWeight);
     final trailerLengthController =
         TextEditingController(text: profile.trailerLength);
     final trailerWidthController =
@@ -207,8 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
             height: MediaQuery.of(context).size.height * 0.85,
             decoration: const BoxDecoration(
               color: Color(0xFFF8F9FA),
-              borderRadius:
-                  BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Column(
               children: [
@@ -222,15 +221,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 Padding(
-                  padding:
-                      const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
                   child: Row(
                     children: [
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8E5AF7)
-                              .withOpacity(0.12),
+                          color: const Color(0xFF8E5AF7).withOpacity(0.12),
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(Icons.edit_outlined,
@@ -241,8 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: Text(
                           'Edit Vehicle',
                           style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800),
+                              fontSize: 20, fontWeight: FontWeight.w800),
                         ),
                       ),
                       IconButton(
@@ -254,25 +250,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(
-                        20, 16, 20, 20),
+                    padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
                     child: Form(
                       key: formKey,
                       child: Column(
                         children: [
                           DropdownButtonFormField<String>(
                             isExpanded: true,
-                            value: equipmentType.isNotEmpty
-                                ? equipmentType
-                                : null,
+                            value:
+                                equipmentType.isNotEmpty ? equipmentType : null,
                             hint: const Text('Not Selected',
                                 style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 14)),
+                                    color: Colors.grey, fontSize: 14)),
                             dropdownColor: Colors.white,
                             style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 14),
+                                color: Colors.black87, fontSize: 14),
                             decoration: InputDecoration(
                               labelText: 'Equipment Type',
                               labelStyle: TextStyle(
@@ -280,15 +272,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   fontWeight: FontWeight.w600,
                                   fontSize: 13),
                               filled: true,
-                              fillColor:
-                                  const Color(0xFFF7F6FB),
+                              fillColor: const Color(0xFFF7F6FB),
                               border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.circular(
-                                          12),
-                                  borderSide: BorderSide(
-                                      color:
-                                          Colors.grey.shade200)),
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: Colors.grey.shade200)),
                             ),
                             items: const [
                               DropdownMenuItem(
@@ -326,8 +314,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 (value == null || value.isEmpty)
                                     ? 'Required'
                                     : null,
-                            onChanged: (v) =>
-                                equipmentType = v!,
+                            onChanged: (v) => equipmentType = v!,
                           ),
                           const SizedBox(height: 14),
                           Row(
@@ -335,27 +322,21 @@ class _HomeScreenState extends State<HomeScreen> {
                               Expanded(
                                 flex: 3,
                                 child: _buildEditField(
-                                    'License Plate',
-                                    licensePlateController,
+                                    'License Plate', licensePlateController,
                                     validator: (v) =>
-                                        (v == null ||
-                                                v.trim().isEmpty)
+                                        (v == null || v.trim().isEmpty)
                                             ? 'Required'
                                             : RegExp(r'^[a-zA-Z0-9]+$')
-                                                    .hasMatch(v
-                                                        .trim())
+                                                    .hasMatch(v.trim())
                                                 ? null
                                                 : 'Alphanumeric only'),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 flex: 2,
-                                child: _buildEditField(
-                                    'Year',
-                                    yearController,
+                                child: _buildEditField('Year', yearController,
                                     validator: (v) =>
-                                        (v == null ||
-                                                v.trim().isEmpty)
+                                        (v == null || v.trim().isEmpty)
                                             ? 'Required'
                                             : null),
                               ),
@@ -365,37 +346,30 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildEditField(
-                                    'Make',
-                                    makeController,
+                                child: _buildEditField('Make', makeController,
                                     validator: (v) =>
-                                        (v == null ||
-                                                v.trim().isEmpty)
+                                        (v == null || v.trim().isEmpty)
                                             ? 'Required'
                                             : null),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildEditField(
-                                    'Model',
-                                    modelController,
+                                child: _buildEditField('Model', modelController,
                                     validator: (v) =>
-                                        (v == null ||
-                                                v.trim().isEmpty)
+                                        (v == null || v.trim().isEmpty)
                                             ? 'Required'
                                             : null),
                               ),
                             ],
                           ),
                           const SizedBox(height: 14),
-                          _buildEditField('Max Weight (lbs)',
-                              maxWeightController,
+                          _buildEditField(
+                              'Max Weight (lbs)', maxWeightController,
                               validator: (v) {
                             if (v == null || v.trim().isEmpty) {
                               return 'Required';
                             }
-                            if (!RegExp(r'^\d{1,7}$')
-                                .hasMatch(v.trim())) {
+                            if (!RegExp(r'^\d{1,7}$').hasMatch(v.trim())) {
                               return 'Max 7 digits';
                             }
                             return null;
@@ -404,18 +378,14 @@ class _HomeScreenState extends State<HomeScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildEditField(
-                                    'Trailer Length (ft)',
+                                child: _buildEditField('Trailer Length (ft)',
                                     trailerLengthController),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
-                                child: _buildEditField(
-                                    'Trailer Width (ft)',
-                                    trailerWidthController,
-                                    validator: (v) {
-                                  if (v == null ||
-                                      v.trim().isEmpty) {
+                                child: _buildEditField('Trailer Width (ft)',
+                                    trailerWidthController, validator: (v) {
+                                  if (v == null || v.trim().isEmpty) {
                                     return 'Required';
                                   }
                                   if (!RegExp(r'^\d{1,3}$')
@@ -429,14 +399,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 14),
                           _buildEditField(
-                              'Trailer Height (ft)',
-                              trailerHeightController,
+                              'Trailer Height (ft)', trailerHeightController,
                               validator: (v) {
                             if (v == null || v.trim().isEmpty) {
                               return 'Required';
                             }
-                            if (!RegExp(r'^\d{1,3}$')
-                                .hasMatch(v.trim())) {
+                            if (!RegExp(r'^\d{1,3}$').hasMatch(v.trim())) {
                               return 'Max 3 digits';
                             }
                             return null;
@@ -446,17 +414,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               Expanded(
                                 child: _buildEditToggle(
-                                    'Liftgate', hasLiftgate,
-                                    (v) => setSheetState(() =>
-                                        hasLiftgate = v)),
+                                    'Liftgate',
+                                    hasLiftgate,
+                                    (v) =>
+                                        setSheetState(() => hasLiftgate = v)),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildEditToggle(
                                     'Hazmat Certified',
-                                    isHazmatCertified, (v) =>
-                                    setSheetState(() =>
-                                        isHazmatCertified = v)),
+                                    isHazmatCertified,
+                                    (v) => setSheetState(
+                                        () => isHazmatCertified = v)),
                               ),
                             ],
                           ),
@@ -468,130 +437,89 @@ class _HomeScreenState extends State<HomeScreen> {
                               onPressed: isSaving
                                   ? null
                                   : () async {
-                                      if (!(formKey
-                                              .currentState
-                                              ?.validate() ??
+                                      if (!(formKey.currentState?.validate() ??
                                           false)) return;
-                                      setSheetState(
-                                          () => isSaving = true);
-                                      final updatedProfile =
-                                          VehicleProfile(
-                                        equipmentType:
-                                            equipmentType,
+                                      setSheetState(() => isSaving = true);
+                                      final updatedProfile = VehicleProfile(
+                                        equipmentType: equipmentType,
                                         licensePlate:
-                                            licensePlateController
-                                                .text
-                                                .trim(),
+                                            licensePlateController.text.trim(),
                                         state: profile.state,
-                                        vinNumber:
-                                            profile.vinNumber,
-                                        year: yearController.text
-                                            .trim(),
-                                        make: makeController.text
-                                            .trim(),
-                                        model: modelController
-                                            .text
-                                            .trim(),
+                                        vinNumber: profile.vinNumber,
+                                        year: yearController.text.trim(),
+                                        make: makeController.text.trim(),
+                                        model: modelController.text.trim(),
                                         trailerLength:
-                                            trailerLengthController
-                                                .text
-                                                .trim(),
+                                            trailerLengthController.text.trim(),
                                         trailerWidth:
-                                            trailerWidthController
-                                                .text
-                                                .trim(),
+                                            trailerWidthController.text.trim(),
                                         trailerHeight:
-                                            trailerHeightController
-                                                .text
-                                                .trim(),
+                                            trailerHeightController.text.trim(),
                                         maxWeight:
-                                            maxWeightController
-                                                .text
-                                                .trim(),
-                                        internalFleetId: profile
-                                            .internalFleetId,
+                                            maxWeightController.text.trim(),
+                                        internalFleetId:
+                                            profile.internalFleetId,
                                         registrationDocumentLabel:
-                                            profile
-                                                .registrationDocumentLabel,
+                                            profile.registrationDocumentLabel,
                                         registrationDocumentType:
-                                            profile
-                                                .registrationDocumentType,
+                                            profile.registrationDocumentType,
                                         insuranceDocumentLabel:
-                                            profile
-                                                .insuranceDocumentLabel,
+                                            profile.insuranceDocumentLabel,
                                         insuranceDocumentType:
-                                            profile
-                                                .insuranceDocumentType,
+                                            profile.insuranceDocumentType,
                                         registrationDocumentPath:
-                                            profile
-                                                .registrationDocumentPath,
+                                            profile.registrationDocumentPath,
                                         insuranceDocumentPath:
-                                            profile
-                                                .insuranceDocumentPath,
+                                            profile.insuranceDocumentPath,
                                         hasLiftgate: hasLiftgate,
-                                        isHazmatCertified:
-                                            isHazmatCertified,
+                                        isHazmatCertified: isHazmatCertified,
                                       );
-                                      final user =
-                                          _auth.currentUser;
+                                      final user = _auth.currentUser;
                                       if (user == null) return;
-                                      final saved = await _auth
-                                          .saveVehicleProfile(
+                                      final saved =
+                                          await _auth.saveVehicleProfile(
                                               userId: user.id,
-                                              profile:
-                                                  updatedProfile);
-                                      if (!mounted) return;
+                                              profile: updatedProfile);
+                                      if (!mounted || !ctx.mounted) return;
                                       if (saved) {
                                         Navigator.pop(ctx);
                                         await _loadHomeData();
                                         if (mounted) {
-                                          ScaffoldMessenger.of(
-                                                  context)
+                                          ScaffoldMessenger.of(context)
                                               .showSnackBar(
                                             const SnackBar(
-                                              content: Text(
-                                                  'Vehicle updated!'),
-                                              backgroundColor:
-                                                  Colors.teal,
+                                              content: Text('Vehicle updated!'),
+                                              backgroundColor: Colors.teal,
                                             ),
                                           );
                                         }
                                       } else {
-                                        setSheetState(() =>
-                                            isSaving = false);
-                                        ScaffoldMessenger.of(
-                                                context)
+                                        setSheetState(() => isSaving = false);
+                                        ScaffoldMessenger.of(context)
                                             .showSnackBar(
                                           const SnackBar(
-                                            content: Text(
-                                                'Failed to save.'),
-                                            backgroundColor:
-                                                Colors.red,
+                                            content: Text('Failed to save.'),
+                                            backgroundColor: Colors.red,
                                           ),
                                         );
                                       }
                                     },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor:
-                                    const Color(0xFF8E5AF7),
+                                backgroundColor: const Color(0xFF8E5AF7),
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
-                                    borderRadius:
-                                        BorderRadius.circular(
-                                            14)),
+                                    borderRadius: BorderRadius.circular(14)),
                               ),
                               child: isSaving
                                   ? const SizedBox(
                                       width: 22,
                                       height: 22,
                                       child: CircularProgressIndicator(
-                                          color: Colors.white,
-                                          strokeWidth: 2),
+                                          color: Colors.white, strokeWidth: 2),
                                     )
                                   : const Text('Save Changes',
                                       style: TextStyle(
-                                          fontWeight:
-                                              FontWeight.w700,
+                                          fontWeight: FontWeight.w700,
                                           fontSize: 16)),
                             ),
                           ),
@@ -623,8 +551,18 @@ class _HomeScreenState extends State<HomeScreen> {
     final username = _auth.currentUser?.username ?? 'Driver';
     final now = DateTime.now();
     const months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December'
     ];
     final currentDate = '${now.day} ${months[now.month - 1]}, ${now.year}';
 
@@ -649,7 +587,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onRefresh: _loadHomeData,
               child: SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -662,7 +601,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             radius: 22,
                             backgroundColor: const Color(0xFF1E1128),
                             child: Text(
-                              username.isNotEmpty ? username[0].toUpperCase() : 'D',
+                              username.isNotEmpty
+                                  ? username[0].toUpperCase()
+                                  : 'D',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -679,7 +620,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         const Spacer(),
                         GestureDetector(
                           onTap: () => Navigator.pushNamed(context, '/search'),
-                          child: Icon(Icons.search, size: 22, color: Colors.grey.shade700),
+                          child: Icon(Icons.search,
+                              size: 22, color: Colors.grey.shade700),
                         ),
                         const SizedBox(width: 14),
                         // ── Notification bell with unread badge ──────────────
@@ -687,14 +629,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           listenable: _notifService,
                           builder: (context, _) {
                             return GestureDetector(
-                              onTap: () =>
-                                  Navigator.pushNamed(context, '/notifications'),
+                              onTap: () => Navigator.pushNamed(
+                                  context, '/notifications'),
                               child: Stack(
                                 clipBehavior: Clip.none,
                                 children: [
                                   Icon(Icons.notifications_none_rounded,
-                                      size: 22,
-                                      color: Colors.grey.shade700),
+                                      size: 22, color: Colors.grey.shade700),
                                   if (_notifService.hasUnread)
                                     Positioned(
                                       top: -2,
@@ -804,9 +745,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                   ),
                                   const SizedBox(height: 6),
                                   GestureDetector(
-                                    onTap: () => setState(() => _isOnDuty = !_isOnDuty),
+                                    onTap: () =>
+                                        setState(() => _isOnDuty = !_isOnDuty),
                                     child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 250),
+                                      duration:
+                                          const Duration(milliseconds: 250),
                                       width: 56,
                                       height: 28,
                                       decoration: BoxDecoration(
@@ -819,7 +762,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                         alignment: Alignment.center,
                                         children: [
                                           AnimatedPositioned(
-                                            duration: const Duration(milliseconds: 250),
+                                            duration: const Duration(
+                                                milliseconds: 250),
                                             left: _isOnDuty ? null : 3,
                                             right: _isOnDuty ? 3 : null,
                                             child: Container(
@@ -869,10 +813,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         const SizedBox(width: 12),
                         Expanded(
                             child: _buildActionCard(
-                            Icons.support_agent_rounded,
-                            'Support',
-                            onTap: () => Navigator.pushNamed(
-                              context, '/customer_support'))),
+                                Icons.support_agent_rounded, 'Support',
+                                onTap: () => Navigator.pushNamed(
+                                    context, '/customer_support'))),
                       ],
                     ),
                     const SizedBox(height: 22),
@@ -1071,7 +1014,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 16),
             const Row(
               children: [
-                 Text(
+                Text(
                   '50% Profile Completed',
                   style: TextStyle(
                     fontSize: 13,
@@ -1079,8 +1022,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.black87,
                   ),
                 ),
-                 Spacer(),
-                 Text(
+                Spacer(),
+                Text(
                   '50%',
                   style: TextStyle(
                     fontSize: 13,
@@ -1213,8 +1156,20 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildVehicleSummaryChip(
-                        'Plate', profile.licensePlate),
+                    child:
+                        _buildVehicleSummaryChip('Plate', profile.licensePlate),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildVehicleSummaryChip('VIN', profile.vinNumber),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _buildVehicleSummaryChip('Year', profile.year),
                   ),
                 ],
               ),
@@ -1223,27 +1178,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   Expanded(
                     child: _buildVehicleSummaryChip(
-                        'VIN', profile.vinNumber),
+                        'Make / Model', '${profile.make} ${profile.model}'),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
-                    child: _buildVehicleSummaryChip(
-                        'Year', profile.year),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildVehicleSummaryChip(
-                        'Make / Model',
-                        '${profile.make} ${profile.model}'),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildVehicleSummaryChip(
-                        'Trailer',
+                    child: _buildVehicleSummaryChip('Trailer',
                         '${profile.trailerLength} x ${profile.trailerWidth} x ${profile.trailerHeight} ft'),
                   ),
                 ],
@@ -1276,7 +1215,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             : 'Not uploaded'),
                   ),
                   const SizedBox(width: 10),
-                  Expanded(child: SizedBox()),
+                  const Expanded(child: SizedBox()),
                 ],
               ),
             ],
@@ -1351,8 +1290,7 @@ class _HomeScreenState extends State<HomeScreen> {
             borderSide: BorderSide(color: Colors.grey.shade200)),
         focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: Color(0xFF8E5AF7), width: 1.5)),
+            borderSide: const BorderSide(color: Color(0xFF8E5AF7), width: 1.5)),
       ),
     );
   }
@@ -1369,25 +1307,17 @@ class _HomeScreenState extends State<HomeScreen> {
               : const Color(0xFFF7F6FB),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-              color: value
-                  ? const Color(0xFF8E5AF7)
-                  : Colors.grey.shade200),
+              color: value ? const Color(0xFF8E5AF7) : Colors.grey.shade200),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-                value
-                    ? Icons.check_box
-                    : Icons.check_box_outline_blank,
-                color: value ? const Color(0xFF7A3FF2) : Colors.grey,
-                size: 18),
+            Icon(value ? Icons.check_box : Icons.check_box_outline_blank,
+                color: value ? const Color(0xFF7A3FF2) : Colors.grey, size: 18),
             const SizedBox(width: 8),
             Text(label,
                 style: TextStyle(
-                    color: value
-                        ? const Color(0xFF7A3FF2)
-                        : Colors.black54,
+                    color: value ? const Color(0xFF7A3FF2) : Colors.black54,
                     fontWeight: FontWeight.w600,
                     fontSize: 13)),
           ],
@@ -1443,8 +1373,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   const Icon(Icons.radio_button_checked,
                       color: Colors.white, size: 18),
-                  Container(
-                      width: 2, height: 35, color: Colors.white30),
+                  Container(width: 2, height: 35, color: Colors.white30),
                   const Icon(Icons.radio_button_unchecked,
                       color: Colors.white, size: 18),
                 ],
@@ -1502,8 +1431,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildActionCard(IconData icon, String label,
-      {VoidCallback? onTap}) {
+  Widget _buildActionCard(IconData icon, String label, {VoidCallback? onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(

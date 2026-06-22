@@ -64,9 +64,9 @@ class _LoadBoardScreenState extends State<LoadBoardScreen> {
                       color: const Color(0xFF1E1128),
                       borderRadius: BorderRadius.circular(15),
                     ),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        const Expanded(
+                         Expanded(
                           child: Text(
                             'Load Board',
                             style: TextStyle(
