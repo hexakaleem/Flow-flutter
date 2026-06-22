@@ -127,7 +127,7 @@ class _LoadDetailsScreenState extends State<LoadDetailsScreen> {
               controller: rateController,
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
-                prefixText: '$',
+                prefixText: '\$',
                 labelText: 'Proposed Rate',
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),

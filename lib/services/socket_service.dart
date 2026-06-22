@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'token_service.dart';
 import 'notification_service.dart';
+import '../models/app_notification.dart';
 
 class SocketService extends ChangeNotifier {
   static final SocketService _instance = SocketService._internal();

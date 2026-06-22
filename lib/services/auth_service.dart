@@ -352,7 +352,9 @@ class AuthService {
       debugPrint('Vehicle profile save error: $e');
       return false;
     }
-    Future<bool> deactivateTruck(String truckId, {bool activate = false}) async {
+  }
+
+  Future<bool> deactivateTruck(String truckId, {bool activate = false}) async {
     try {
       final newStatus = activate ? 'available' : 'disabled';
       await _api.patch('/fleet/trucks/$truckId', body: {'status': newStatus});
@@ -375,7 +377,6 @@ class AuthService {
       return false;
     }
   }
-}
 
   /// Upload a document file (registration, insurance, etc.) to the backend.
   /// Returns the URL of the uploaded file, or null on failure.
